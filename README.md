@@ -1,7 +1,7 @@
-# IELTS 备考 AI 教练skill
+# IELTS 备考 AI 教练skills
 
 <p align="center">
-  <strong>📊 基于 AI 的雅思备考系统，配备本地可视化 Dashboard</strong><br>
+  <strong>📊 基于 AI 的雅思备考skills，配备本地可视化 Dashboard</strong><br>
   <sub>写作 · 阅读 · 听力 · 口语 · 词汇 · 模考 · 智能解读</sub>
 </p>
 
