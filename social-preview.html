@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px; height: 640px;
+    background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 30%, #24243e 60%, #0f0c29 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    overflow: hidden;
+  }
+  .card {
+    width: 1160px; height: 540px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 60px 80px;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .card::before {
+    content: ''; position: absolute;
+    top: -1px; left: 60px; right: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,179,237,0.5), transparent);
+  }
+  .tagline {
+    font-size: 16px; color: rgba(99,179,237,0.8);
+    letter-spacing: 0.15em; margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .title {
+    font-size: 52px; font-weight: 800; color: #ffffff;
+    line-height: 1.2; margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  .title .accent {
+    background: linear-gradient(135deg, #63b3ed, #4299e1);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    font-size: 18px; color: rgba(255,255,255,0.5);
+    margin-bottom: 48px; letter-spacing: 0.02em;
+  }
+  .features {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-bottom: auto;
+  }
+  .feature {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 15px; color: rgba(255,255,255,0.7);
+    display: flex; align-items: center; gap: 10px;
+    letter-spacing: 0.03em;
+  }
+  .feature .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.blue { background: #63b3ed; box-shadow: 0 0 8px rgba(99,179,237,0.6); }
+  .dot.green { background: #68d391; box-shadow: 0 0 8px rgba(104,211,145,0.6); }
+  .dot.pink { background: #f687b3; box-shadow: 0 0 8px rgba(246,135,179,0.6); }
+  .dot.amber { background: #f6ad55; box-shadow: 0 0 8px rgba(246,173,85,0.6); }
+  .dot.purple { background: #b794f4; box-shadow: 0 0 8px rgba(183,148,244,0.6); }
+  .dot.cyan { background: #76e4f7; box-shadow: 0 0 8px rgba(118,228,247,0.6); }
+  .dot.rose { background: #fc8181; box-shadow: 0 0 8px rgba(252,129,129,0.6); }
+  .footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 40px;
+  }
+  .badges {
+    display: flex; gap: 12px; align-items: center;
+  }
+  .badge {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .badge.mit { color: #68d391; background: rgba(104,211,145,0.1); }
+  .badge.python { color: #63b3ed; background: rgba(99,179,237,0.1); }
+  .badge.cross { color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); }
+  .repo-url {
+    font-size: 14px; color: rgba(255,255,255,0.3);
+    letter-spacing: 0.05em;
+  }
+  /* Decorative elements */
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: 0.15; pointer-events: none;
+  }
+  .orb-1 { width: 300px; height: 300px; background: #63b3ed; top: -100px; right: -80px; }
+  .orb-2 { width: 200px; height: 200px; background: #b794f4; bottom: -60px; left: 20%; }
+  .orb-3 { width: 150px; height: 150px; background: #68d391; top: 50%; left: -60px; }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="card">
+  <div class="tagline">✦ CodeBuddy IELTS Skill System</div>
+  <div class="title">
+    IELTS <span class="accent">AI Coach</span>
+  </div>
+  <div class="subtitle">雅思备考 AI 教练系统 · 本地可视化 Dashboard · 写作/阅读/听力/口语/词汇/模考</div>
+  <div class="features">
+    <div class="feature"><span class="dot blue"></span>写作批改</div>
+    <div class="feature"><span class="dot green"></span>阅读精读</div>
+    <div class="feature"><span class="dot pink"></span>听力分析</div>
+    <div class="feature"><span class="dot amber"></span>口语素材</div>
+    <div class="feature"><span class="dot purple"></span>词汇训练</div>
+    <div class="feature"><span class="dot cyan"></span>模考评估</div>
+    <div class="feature"><span class="dot rose"></span>智能解读</div>
+  </div>
+  <div class="footer">
+    <div class="badges">
+      <span class="badge mit">MIT License</span>
+      <span class="badge python">Python 3.8+</span>
+      <span class="badge cross">Win · Mac · Linux</span>
+    </div>
+    <div class="repo-url">github.com/tjy678/ielts-ai-coach</div>
+  </div>
+</div>
+</body>
+</html>
