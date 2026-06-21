@@ -430,11 +430,6 @@ Chart.js 通过 CDN 加载，首次使用需要联网。离线时数据卡片和
 - 新增 `allow_reuse_address`，支持各平台服务器快速重启
 - 优化跨平台路径处理
 
-**代码清理：**
-- 删除未使用函数：`loadJSONSync()`、`buildReportPreview()`、`updateAnalyzeButton()`
-- 清理重复/过期的分析报告
-- `history.json` 从 3 条幽灵记录精简为 1 条有效记录
-
 ---
 
 ## 许可证
