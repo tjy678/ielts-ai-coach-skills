@@ -1,0 +1,6 @@
+{
+  "listening": { "key": "listening", "label": "Listening", "labelCN": "听力", "color": "#38bdf8", "icon": "" },
+  "reading": { "key": "reading", "label": "Reading", "labelCN": "阅读", "color": "#4ade80", "icon": "" },
+  "writing": { "key": "writing", "label": "Writing", "labelCN": "写作", "color": "#f87171", "icon": "" },
+  "speaking": { "key": "speaking", "label": "Speaking", "labelCN": "口语", "color": "#f472b6", "icon": "" }
+}

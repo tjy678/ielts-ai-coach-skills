@@ -1,0 +1,4053 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IELTS 备考 Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-hover: #273449;
+    --border: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --red: #f87171;
+    --orange: #fb923c;
+    --pink: #f472b6;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    --font: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 24px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px;
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .exam-badge {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .exam-badge strong {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+  .target-badge {
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(129,140,248,0.15));
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+  .target-badge strong {
+    font-size: 1.3rem;
+  }
+
+  /* Nav Tabs */
+  .nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 6px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .nav-btn {
+    flex: 1;
+    min-width: 90px;
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: var(--font);
+  }
+  .nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .nav-btn.active {
+    background: var(--accent);
+    color: #0f172a;
+    font-weight: 700;
+    box-shadow: 0 2px 12px rgba(56,189,248,0.3);
+  }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Score Cards Grid */
+  .score-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .score-cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .score-cards { grid-template-columns: 1fr; } }
+
+  .score-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .score-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .score-card .label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .score-card .value {
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .score-card .trend {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+  .trend-flat { color: var(--text-dim); }
+
+  .overall-estimate {
+    background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(129,140,248,0.1));
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: var(--radius);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .overall-estimate .item {
+    text-align: center;
+  }
+  .overall-estimate .item .val {
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+  .overall-estimate .item .lbl {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .overall-estimate .divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+  }
+
+  /* Charts Row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+  .chart-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .chart-box h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+  .chart-box canvas {
+    max-height: 300px;
+  }
+
+  /* Full-width chart */
+  .chart-full {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .chart-full h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Detail Pages */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  .detail-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .detail-box h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+  .stat-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-item .val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-item .lbl {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* Activity List */
+  .activity-list {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .activity-list h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-item .type-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  .tag-writing { background: rgba(248,113,113,0.2); color: var(--red); }
+  .tag-reading { background: rgba(74,222,128,0.2); color: var(--green); }
+  .tag-listening { background: rgba(56,189,248,0.2); color: var(--accent); }
+  .tag-speaking { background: rgba(244,114,182,0.2); color: var(--pink); }
+
+  /* Topic Progress */
+  .topic-bar {
+    margin-bottom: 10px;
+  }
+  .topic-bar .name {
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .topic-bar .track {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .topic-bar .fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.6s ease;
+  }
+
+  /* Vocab stats */
+  .vocab-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .vocab-stats { grid-template-columns: repeat(2, 1fr); } }
+  .vocab-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+  .vocab-stat .val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+  .vocab-stat .lbl {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Loading & Error */
+  .loading, .error-msg {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+  }
+  .error-msg { color: var(--red); }
+
+  /* Animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page.active {
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* Exam Entry Form */
+  .exam-entry {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .exam-entry h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .exam-entry .form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 12px;
+  }
+  .exam-entry .form-row:last-child { margin-bottom: 0; }
+  .exam-entry .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 100px;
+  }
+  .exam-entry .form-group label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .exam-entry select, .exam-entry input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 120px;
+  }
+  .exam-entry select:focus, .exam-entry input:focus {
+    border-color: var(--accent);
+  }
+  .exam-entry input.wide { width: 140px; }
+  .exam-entry .form-sep {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 0 4px;
+    align-self: flex-end;
+    margin-bottom: 2px;
+  }
+  .exam-entry .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #7dd3fc;
+    box-shadow: 0 2px 12px rgba(56,189,248,0.3);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text-dim); }
+  .exam-entry .result-preview {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: none;
+    border: 1px solid var(--border);
+  }
+  .exam-entry .result-preview.show { display: block; }
+  .exam-entry .result-preview .score-line {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .exam-entry .result-preview .score-line .s-item {
+    font-weight: 600;
+  }
+  .exam-entry .result-preview .score-line .s-item span {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+  .exam-entry .result-preview .saved-msg {
+    color: var(--green);
+    margin-top: 6px;
+    font-size: 0.8rem;
+  }
+  .exam-entry .collapse-toggle {
+    font-size: 0.75rem;
+    color: var(--accent);
+    cursor: pointer;
+    margin-left: auto;
+    user-select: none;
+  }
+  .exam-entry .form-body.collapsed { display: none; }
+
+  /* Error Report */
+  .error-report {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 3px solid var(--red);
+    animation: fadeIn 0.4s ease;
+  }
+  .error-report .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .error-report .report-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--red);
+  }
+  .report-content {
+    margin-bottom: 16px;
+  }
+  .error-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+  }
+  .error-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg);
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.75rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .error-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .error-table .q-num {
+    color: var(--red);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .error-table .q-section {
+    color: var(--text-dim);
+    font-size: 0.7rem;
+  }
+
+  .report-summary {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  .report-summary h4 {
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .insight-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+  .insight-row:last-child { border-bottom: none; }
+  .insight-icon {
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+  .improve-plan {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  @media (max-width: 700px) { .improve-plan { grid-template-columns: 1fr; } }
+  .improve-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .improve-card h5 {
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .improve-card p {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .score-delta {
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .delta-up { color: var(--green); }
+  .delta-down { color: var(--red); }
+
+  /* Clickable exam history items */
+  .exam-clickable {
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin: 0 -8px;
+  }
+  .exam-clickable:hover {
+    background: rgba(56,189,248,0.08);
+    transform: translateX(2px);
+  }
+  .exam-clickable:active { transform: scale(0.99); }
+
+  /* Exam error detail modal */
+  .exam-error-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+  .exam-error-panel {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    max-width: 650px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s ease;
+  }
+  .exam-error-panel h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+  .exam-error-panel .subtitle {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .exam-error-panel .close-btn {
+    position: absolute;
+    top: 12px; right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: color 0.2s;
+  }
+  .exam-error-panel .close-btn:hover { color: var(--red); }
+  .exam-error-subject {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .exam-error-subject .subject-header {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+  .exam-error-subject .error-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .exam-error-subject .error-tag {
+    display: inline-block;
+    background: rgba(248,113,113,0.15);
+    border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .exam-error-no-data {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 20px;
+    font-size: 0.85rem;
+  }
+  .exam-error-actions {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .exam-error-actions .btn-sm {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+  .exam-error-analysis-result {
+    margin-top: 12px;
+  }
+  .analysis-preview-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 0.8rem;
+  }
+  .analysis-preview-box .preview-header {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+  .analysis-preview-box .preview-subtitle {
+    font-weight: 600;
+    color: var(--accent);
+    margin: 10px 0 6px;
+    font-size: 0.8rem;
+  }
+  .analysis-preview-box .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
+  }
+  .analysis-preview-box .preview-table td,
+  .analysis-preview-box .preview-table th {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    text-align: left;
+    color: var(--text-dim);
+  }
+  .analysis-preview-box .preview-table th {
+    background: var(--card);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .analysis-preview-box .preview-list {
+    margin: 4px 0 8px;
+    padding-left: 18px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .analysis-preview-box .preview-list li {
+    margin-bottom: 4px;
+  }
+
+  /* Essay upload in exam form */
+  .essay-textarea {
+    width: 100%;
+    min-height: 100px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    resize: vertical;
+    line-height: 1.5;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+  .essay-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(56,189,248,0.15);
+  }
+  .essay-textarea::placeholder {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+  .essay-char-count {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-align: right;
+    margin-top: 2px;
+  }
+  .essay-score-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .essay-score-status.pending { background: rgba(250,204,21,0.15); color: var(--yellow); }
+  .essay-score-status.scored { background: rgba(74,222,128,0.15); color: var(--green); }
+  .essay-score-status.error { background: rgba(248,113,113,0.15); color: var(--red); }
+  .essay-score-dimensions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .essay-score-dim {
+    text-align: center;
+    font-size: 0.65rem;
+    padding: 4px;
+    background: var(--card);
+    border-radius: 3px;
+  }
+  .essay-score-dim .dim-label { color: var(--text-dim); }
+  .essay-score-dim .dim-val { font-weight: 700; color: var(--accent); font-size: 0.85rem; }
+  .essay-or-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+  }
+  .essay-or-divider::before, .essay-or-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+  .essay-manual-band {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .essay-manual-band input {
+    width: 80px;
+  }
+
+  /* Analysis Reports section */
+  .analysis-section {
+    margin-top: 24px;
+  }
+  .analysis-section .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .analysis-section .section-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .analysis-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s;
+  }
+  .analysis-card:hover {
+    border-color: var(--accent);
+  }
+  .analysis-card .report-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+  .analysis-card .report-icon {
+    font-size: 1.4rem;
+  }
+  .analysis-card .report-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .analysis-card .report-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .analysis-card .report-date {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .analysis-card .report-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-sm:hover { color: var(--text); border-color: var(--text-dim); }
+  .btn-sm.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+  .btn-sm.primary:hover { background: #7dd3fc; }
+  .btn-sm.danger { color: var(--red); border-color: rgba(248,113,113,0.3); }
+  .btn-sm.danger:hover { background: rgba(248,113,113,0.1); }
+
+  /* Analysis report viewer modal */
+  .analysis-viewer-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+  .analysis-viewer-panel {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    max-width: 900px;
+    width: 92%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s ease;
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  .analysis-viewer-panel h1 { font-size: 1.3rem; margin-bottom: 8px; }
+  .analysis-viewer-panel h2 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .analysis-viewer-panel h3 { font-size: 0.95rem; margin-top: 16px; margin-bottom: 8px; }
+  .analysis-viewer-panel table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.82rem; }
+  .analysis-viewer-panel th, .analysis-viewer-panel td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+  .analysis-viewer-panel th { background: var(--bg); font-weight: 600; }
+  .analysis-viewer-panel code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-size: 0.82rem; }
+  .analysis-viewer-panel blockquote { border-left: 3px solid var(--accent); padding-left: 14px; color: var(--text-dim); margin: 10px 0; }
+  .analysis-viewer-panel .close-btn {
+    position: sticky; top: 0; float: right;
+    background: none; border: none; color: var(--text-dim);
+    font-size: 1.3rem; cursor: pointer; font-family: var(--font);
+    z-index: 10;
+  }
+  .analysis-viewer-panel .close-btn:hover { color: var(--red); }
+
+  .analysis-empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 30px;
+    font-size: 0.85rem;
+  }
+  .analysis-generating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent);
+    padding: 12px 0;
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <h1>IELTS 备考 Dashboard</h1>
+    <div class="header-right">
+      <div class="exam-badge">距考试 <strong id="daysLeft">--</strong> 天</div>
+      <div class="target-badge">目标 <strong id="targetBand">--</strong></div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <button class="nav-btn active" data-page="overview">总览</button>
+    <button class="nav-btn" data-page="writing">写作</button>
+    <button class="nav-btn" data-page="reading">阅读</button>
+    <button class="nav-btn" data-page="listening">听力</button>
+    <button class="nav-btn" data-page="speaking">口语</button>
+    <button class="nav-btn" data-page="vocab">词汇</button>
+    <button class="nav-btn" data-page="exam">模考</button>
+  </nav>
+
+  <!-- ====== OVERVIEW PAGE ====== -->
+  <div class="page active" id="page-overview">
+    <div class="score-cards" id="scoreCards"></div>
+    <div class="overall-estimate" id="overallEstimate"></div>
+    <div class="charts-row">
+      <div class="chart-box">
+        <h3>四科雷达图</h3>
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>四科分数走势</h3>
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+    <div class="activity-list">
+      <h3>最近活动</h3>
+      <div id="recentActivity"></div>
+    </div>
+  </div>
+
+  <!-- ====== WRITING PAGE ====== -->
+  <div class="page" id="page-writing">
+    <div class="stats-row" id="writingStats"></div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>写作分数走势</h3>
+        <canvas id="writingTrendChart"></canvas>
+      </div>
+      <div class="detail-box">
+        <h3>四维能力雷达 (最近一篇)</h3>
+        <canvas id="writingRadarChart"></canvas>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>最近批改记录</h3>
+        <div id="writingHistory"></div>
+      </div>
+      <div class="detail-box">
+        <h3>高频扣分项</h3>
+        <div id="writingWeakness"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== READING PAGE ====== -->
+  <div class="page" id="page-reading">
+    <div class="stats-row" id="readingStats"></div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>阅读正确率走势</h3>
+        <canvas id="readingTrendChart"></canvas>
+      </div>
+      <div class="detail-box">
+        <h3>错题题型分布</h3>
+        <canvas id="readingTypeChart"></canvas>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>最近阅读记录</h3>
+        <div id="readingHistory"></div>
+      </div>
+      <div class="detail-box">
+        <h3>错题历史</h3>
+        <div id="readingErrorHistory"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== LISTENING PAGE ====== -->
+  <div class="page" id="page-listening">
+    <div class="stats-row" id="listeningStats"></div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>听力正确率走势 (按 Section)</h3>
+        <canvas id="listeningTrendChart"></canvas>
+      </div>
+      <div class="detail-box">
+        <h3>Section 1-4 正确率对比</h3>
+        <canvas id="listeningSectionChart"></canvas>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>最近听力记录</h3>
+        <div id="listeningHistory"></div>
+      </div>
+      <div class="detail-box">
+        <h3>错题历史</h3>
+        <div id="listeningErrorHistory"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SPEAKING PAGE ====== -->
+  <div class="page" id="page-speaking">
+    <div class="stats-row" id="speakingStats"></div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>口语自评分数走势</h3>
+        <canvas id="speakingTrendChart"></canvas>
+      </div>
+      <div class="detail-box">
+        <h3>四维口语能力 (最近一次)</h3>
+        <canvas id="speakingRadarChart"></canvas>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>Part 2 话题覆盖进度</h3>
+        <div id="topicCoverage"></div>
+      </div>
+      <div class="detail-box">
+        <h3>最近练习记录</h3>
+        <div id="speakingHistory"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== VOCAB PAGE ====== -->
+  <div class="page" id="page-vocab">
+    <div class="vocab-stats" id="vocabStats"></div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>词汇量增长趋势</h3>
+        <canvas id="vocabGrowthChart"></canvas>
+      </div>
+      <div class="detail-box">
+        <h3>复习正确率走势</h3>
+        <canvas id="vocabAccuracyChart"></canvas>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3>各等级词汇分布</h3>
+        <canvas id="vocabLevelChart"></canvas>
+      </div>
+      <div class="detail-box">
+        <h3>待复习队列</h3>
+        <div id="vocabQueue"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== EXAM PAGE ====== -->
+  <div class="page" id="page-exam">
+    <!-- Exam Entry Form -->
+    <div class="exam-entry" id="examEntry">
+      <h3>📝 模考结果录入 <span class="collapse-toggle" onclick="toggleExamEntry()">收起 ▲</span></h3>
+      <div class="form-body" id="examEntryBody">
+        <div class="form-row">
+          <div class="form-group">
+            <label>剑桥编号</label>
+            <select id="examCambridge" onchange="updateEntryPreview()">
+              <option value="">选择…</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Test 编号</label>
+            <select id="examTest" onchange="updateEntryPreview()">
+              <option value="">选择…</option>
+              <option value="1">Test 1</option>
+              <option value="2">Test 2</option>
+              <option value="3">Test 3</option>
+              <option value="4">Test 4</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>模考日期</label>
+            <input type="date" id="examDate" onchange="updateEntryPreview()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>听力 /40</label>
+            <input type="number" id="examL" min="0" max="40" placeholder="正确数" oninput="updateEntryPreview()">
+          </div>
+          <div class="form-group">
+            <label>阅读 /40</label>
+            <input type="number" id="examR" min="0" max="40" placeholder="正确数" oninput="updateEntryPreview()">
+          </div>
+          <div class="form-group">
+            <label>口语 Band</label>
+            <input type="number" id="examS" min="0" max="9" step="0.5" placeholder="估分" oninput="updateEntryPreview()">
+          </div>
+        </div>
+        <!-- 写作：支持直接估分或粘贴作文文本 -->
+        <div class="exam-section-title" style="font-weight:600;color:var(--accent);margin:8px 0 4px;font-size:0.85rem">✏️ 写作评估</div>
+        <div class="essay-manual-band">
+          <label style="white-space:nowrap;font-size:0.8rem">直接估分：</label>
+          <input type="number" id="examW" min="0" max="9" step="0.5" placeholder="Band" oninput="updateEntryPreview()" style="width:80px">
+          <span style="font-size:0.7rem;color:var(--text-dim)">或粘贴作文由 AI 评分</span>
+        </div>
+        <div class="form-row" style="margin-top:8px">
+          <div class="form-group" style="flex:1">
+            <label>Task 1 作文（直接粘贴文本）</label>
+            <textarea class="essay-textarea" id="essayT1Text" placeholder="在此粘贴 Task 1 作文全文..." oninput="updateEssayCharCount('task1')"></textarea>
+            <div class="essay-char-count" id="essayT1Count">0 字符</div>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Task 2 作文（直接粘贴文本）</label>
+            <textarea class="essay-textarea" id="essayT2Text" placeholder="在此粘贴 Task 2 作文全文..." oninput="updateEssayCharCount('task2')"></textarea>
+            <div class="essay-char-count" id="essayT2Count">0 字符</div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:8px">
+          <div class="form-group">
+            <label>听力错题号（可选，逗号分隔）</label>
+            <input type="text" id="examLErrors" placeholder="如: 3,7,12,25" style="width:300px">
+          </div>
+          <div class="form-group">
+            <label>阅读错题号（可选，逗号分隔）</label>
+            <input type="text" id="examRErrors" placeholder="如: 5,18,33" style="width:300px">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="examSaveBtn" onclick="saveExamEntry()">💾 保存记录</button>
+          <button class="btn-secondary" onclick="resetExamEntry()">清空</button>
+        </div>
+        <div class="result-preview" id="examPreview"></div>
+      </div>
+    </div>
+    <div class="stats-row" id="examStats"></div>
+    <div class="charts-row">
+      <div class="chart-box">
+        <h3>模考总分走势</h3>
+        <canvas id="examTrendChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>四科模考雷达图（最近一次）</h3>
+        <canvas id="examRadarChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-full">
+      <h3>四科模考分数变化</h3>
+      <canvas id="examSubjectChart"></canvas>
+    </div>
+    <div class="activity-list">
+      <h3>模考历史记录</h3>
+      <div id="examHistory"></div>
+    </div>
+    <!-- Error Record Summary -->
+    <div class="error-report" id="errorReport" style="display:none">
+      <div class="report-header">
+        <h3>📝 错题记录</h3>
+        <span class="collapse-toggle" onclick="toggleErrorReport()">收起 ▲</span>
+      </div>
+      <div class="report-body" id="errorReportBody">
+        <div class="report-content" id="reportContent"></div>
+        <div class="report-summary" id="reportSummary"></div>
+      </div>
+    </div>
+    <!-- Analysis Reports -->
+    <div class="analysis-section" id="analysisSection">
+      <div class="section-header">
+        <h3>📋 模考解读报告</h3>
+        <span style="color:var(--text-dim);font-size:0.75rem">💡 保存模考记录后，在 AI 助手对话框发送「<b>智能解读 exam-id</b>」一键获取错题分析 + 写作评分</span>
+      </div>
+      <div id="analysisStatus"></div>
+      <div id="analysisReports"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    IELTS 备考 Dashboard v1.0 · 数据来源: ./data/ · 纯本地存储 · 刷新时间: <span id="refreshTime">--</span>
+  </div>
+</div>
+
+<script>
+// ============= DATA LOADER =============
+const DATA_BASE = './data';
+let profile, progress, history, writingIdx, readingIdx, listeningIdx, speakingIdx, vocabIdx;
+
+// External config data — loaded from JSON files at init
+let SCORE_CONV = { listening: [], reading: [] };
+let ERROR_REASONS = { listening: {}, reading: {} };
+let SUBJECTS = {};
+let SPEAKING_TOPICS = { categories: [] };
+let WRITING_DIMENSIONS = {};
+let EXAM_TYPE_LABELS = {};
+
+function getStorageKey(path) {
+  return 'ielts_dash_' + path.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+async function loadJSON(path, forceReload) {
+  try {
+    const storageKey = getStorageKey(path);
+    // Try localStorage first (unless forced reload)
+    if (!forceReload) {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    }
+    // Use fetch (works with http:// and some file:// setups)
+    const resp = await fetch(path);
+    if (resp.ok) {
+      const data = await resp.json();
+      try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch(e) {}
+      return data;
+    }
+  } catch(e) {
+    // fetch failed — try synchronous XHR as fallback
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', path, false);
+      xhr.send();
+      if (xhr.status === 200 || xhr.status === 0) {
+        const data = JSON.parse(xhr.responseText);
+        const storageKey = getStorageKey(path);
+        try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch(e2) {}
+        return data;
+      }
+    } catch(e2) {
+      console.warn('All load methods failed for:', path);
+    }
+  }
+  return null;
+}
+
+async function saveJSON(path, data) {
+  let ok = false;
+  // 1. Always save to localStorage (fast, works offline)
+  try {
+    const storageKey = getStorageKey(path);
+    localStorage.setItem(storageKey, JSON.stringify(data));
+    ok = true;
+  } catch(e) {
+    console.warn('localStorage save failed:', path, e.message);
+  }
+  // 2. Persist to disk via POST API
+  try {
+    const resp = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: path, data: data })
+    });
+    if (!resp.ok) {
+      console.warn('API save failed:', path, resp.status);
+    } else {
+      ok = true;
+    }
+  } catch(e) {
+    console.warn('API save unavailable:', path, e.message);
+  }
+  return ok;
+}
+
+async function initData() {
+  // Load all data + config via fetch (works in file:// protocol)
+  const results = await Promise.all([
+    // User data
+    loadJSON(DATA_BASE + '/profile.json', true),
+    loadJSON(DATA_BASE + '/progress.json', true),
+    loadJSON(DATA_BASE + '/history.json', true),
+    loadJSON(DATA_BASE + '/writing/index.json', true),
+    loadJSON(DATA_BASE + '/reading/index.json', true),
+    loadJSON(DATA_BASE + '/listening/index.json', true),
+    loadJSON(DATA_BASE + '/speaking/index.json', true),
+    loadJSON(DATA_BASE + '/vocab/index.json', true),
+    // External config data
+    loadJSON(DATA_BASE + '/score-conversion.json'),
+    loadJSON(DATA_BASE + '/error-reasons.json'),
+    loadJSON(DATA_BASE + '/subjects.json'),
+    loadJSON(DATA_BASE + '/speaking-topics.json'),
+    loadJSON(DATA_BASE + '/writing-dimensions.json'),
+    loadJSON(DATA_BASE + '/exam-types.json')
+  ]);
+
+  [profile, progress, history, writingIdx, readingIdx, listeningIdx, speakingIdx, vocabIdx,
+   scoreConv, errorReasons, subjects, speakingTopics, writingDimensions, examTypeLabels] = results;
+
+  // Provide fallback data if files not found
+  if (!profile) profile = { targetBand: 7.0, examDate: null, daysUntilExam: null, currentLevel: { listening: null, reading: null, writing: null, speaking: null }, studyPlan: { weeklyHours: null, focusAreas: [] } };
+  if (!progress) progress = { listening: { totalTests:0, averageScore:null, trend:[], weakestType:'-' }, reading: { totalTests:0, totalPassages:0, averageScore:null, trend:[], weakestType:'-' }, writing: { totalEssays:0, averageScore:null, trend:[], weakestDimension:'-', task1Count:0, task2Count:0 }, speaking: { totalPractices:0, averageScore:null, trend:[], coveredTopics:[] } };
+  if (!history) history = { entries: [] };
+  if (!writingIdx) writingIdx = { essays: [] };
+  if (!readingIdx) readingIdx = { passages: [] };
+  if (!listeningIdx) listeningIdx = { tests: [] };
+  if (!speakingIdx) speakingIdx = { practices: [] };
+  if (!vocabIdx) vocabIdx = { words: [], stats: { totalWords:0, mastered:0, learning:0, newToday:0, reviewToday:0, accuracy:0, streak:0 } };
+
+  // Config fallbacks
+  if (!scoreConv || !scoreConv.listening) scoreConv = { listening: [[39,9],[37,8.5],[35,8],[32,7.5],[30,7],[26,6.5],[23,6],[18,5.5],[16,5],[13,4.5],[11,4],[8,3.5],[5,3],[0,2.5]], reading: [[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[19,5.5],[15,5],[13,4.5],[10,4],[8,3.5],[5,3],[0,2.5]] };
+  SCORE_CONV = scoreConv;
+  if (!errorReasons || !errorReasons.listening) errorReasons = { listening: { 'L-SPELL':'拼写错误','L-SYN':'同义替换未识别','L-DIST':'被干扰项误导','L-LOST':'跟丢/错过','L-PRE':'预判错误','L-FOCUS':'注意力分散','L-LIMIT':'词数限制忽略' }, reading: { 'R-LOCATE':'定位失败','R-SYN':'同义替换未识别','R-NG':'NG判断失误','R-INFER':'过度推断','R-KW':'关键词偏差','R-TIME':'时间不足','R-LOGIC':'逻辑判断错误' } };
+  ERROR_REASONS = errorReasons;
+  if (!subjects || !subjects.listening) subjects = { listening:{key:'listening',label:'Listening',labelCN:'听力',color:'#38bdf8',icon:''}, reading:{key:'reading',label:'Reading',labelCN:'阅读',color:'#4ade80',icon:''}, writing:{key:'writing',label:'Writing',labelCN:'写作',color:'#f87171',icon:''}, speaking:{key:'speaking',label:'Speaking',labelCN:'口语',color:'#f472b6',icon:''} };
+  SUBJECTS = subjects;
+  if (!speakingTopics || !speakingTopics.categories) speakingTopics = { categories: [{cat:'People',total:12},{cat:'Places',total:10},{cat:'Objects',total:8},{cat:'Experiences',total:15},{cat:'Hobbies/Habits',total:6},{cat:'Abstract',total:5}] };
+  SPEAKING_TOPICS = speakingTopics;
+  if (!writingDimensions || !writingDimensions.tr) writingDimensions = { tr:'Task Response', cc:'Coherence & Cohesion', lr:'Lexical Resource', gra:'Grammar' };
+  WRITING_DIMENSIONS = writingDimensions;
+  if (!examTypeLabels || !examTypeLabels.full) examTypeLabels = { full:'全科模考', half:'半模考', single:'单科模考' };
+  EXAM_TYPE_LABELS = examTypeLabels;
+
+  document.getElementById('refreshTime').textContent = new Date().toLocaleString('zh-CN');
+}
+
+// ============= DATA SYNC: Rebuild progress & module indexes from exam/index.json =============
+// This ensures Dashboard overview / radar / trend / module pages all reflect the latest exam data.
+async function syncProgressFromExams() {
+  // forceReload=true to bypass localStorage cache and always read latest disk data
+  const examIdx = await loadJSON(DATA_BASE + '/exam/index.json', true) || { exams: [] };
+  const exams = examIdx.exams || [];
+
+  // --- Recalculate progress.json ---
+  const newProgress = {
+    listening: { totalTests: 0, averageScore: null, trend: [], weakestType: '-' },
+    reading: { totalTests: 0, totalPassages: 0, averageScore: null, trend: [], weakestType: '-' },
+    writing: { totalEssays: 0, averageScore: null, trend: [], weakestDimension: '-', task1Count: 0, task2Count: 0 },
+    speaking: { totalPractices: 0, averageScore: null, trend: [], coveredTopics: [] }
+  };
+
+  // Listening & Reading from exams
+  const lScores = [], rScores = [], wScores = [], sScores = [];
+  const lTrend = [], rTrend = [], wTrend = [], sTrend = [];
+  exams.forEach(e => {
+    const sc = e.scores || {};
+    const ts = e.timestamp ? e.timestamp.slice(0, 10) : '';
+    if (sc.listening != null) { lScores.push(sc.listening); lTrend.push({ date: e.timestamp, score: sc.listening }); }
+    if (sc.reading != null) { rScores.push(sc.reading); rTrend.push({ date: e.timestamp, score: sc.reading }); }
+    if (sc.writing != null) { wScores.push(sc.writing); wTrend.push({ date: e.timestamp, score: sc.writing }); }
+    if (sc.speaking != null) { sScores.push(sc.speaking); sTrend.push({ date: e.timestamp, score: sc.speaking }); }
+  });
+  newProgress.listening.totalTests = lScores.length;
+  newProgress.listening.averageScore = lScores.length ? Math.round(lScores.reduce((a,b)=>a+b,0)/lScores.length*10)/10 : null;
+  newProgress.listening.trend = lTrend.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  newProgress.reading.totalTests = rScores.length;
+  newProgress.reading.averageScore = rScores.length ? Math.round(rScores.reduce((a,b)=>a+b,0)/rScores.length*10)/10 : null;
+  newProgress.reading.trend = rTrend.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  newProgress.writing.totalEssays = wScores.length;
+  newProgress.writing.averageScore = wScores.length ? Math.round(wScores.reduce((a,b)=>a+b,0)/wScores.length*10)/10 : null;
+  newProgress.writing.trend = wTrend.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  newProgress.speaking.totalPractices = sScores.length;
+  newProgress.speaking.averageScore = sScores.length ? Math.round(sScores.reduce((a,b)=>a+b,0)/sScores.length*10)/10 : null;
+  newProgress.speaking.trend = sTrend.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+
+  // Task 1 / Task 2 counts
+  let t1Count = 0, t2Count = 0;
+  exams.forEach(e => {
+    if (e.essayData?.task1?.aiScored) t1Count++;
+    if (e.essayData?.task2?.aiScored) t2Count++;
+  });
+  newProgress.writing.task1Count = t1Count;
+  newProgress.writing.task2Count = t2Count;
+
+  // Update global progress
+  progress = newProgress;
+  await saveJSON(DATA_BASE + '/progress.json', progress);
+
+  // --- Rebuild writing/index.json from exam essayData ---
+  const essays = [];
+  exams.forEach(e => {
+    const essayData = e.essayData || {};
+    ['task1', 'task2'].forEach(tt => {
+      const ed = essayData[tt];
+      if (!ed || !ed.aiScored || !ed.scores) return;
+      // Map to writing module's expected score format: { tr, cc, lr, gra, overall }
+      const rawScores = ed.scores;
+      essays.push({
+        id: e.id + '-' + tt,
+        examId: e.id,
+        source: e.source || '',
+        timestamp: e.timestamp,
+        taskType: tt,
+        question: ed.question || '',
+        scores: {
+          tr: rawScores.taskResponse || rawScores.taskAchievement || rawScores.tr || 0,
+          cc: rawScores.coherence || rawScores.cc || 0,
+          lr: rawScores.lexical || rawScores.lr || 0,
+          gra: rawScores.grammar || rawScores.gra || 0,
+          overall: rawScores.overall || 0
+        }
+      });
+    });
+  });
+  essays.sort((a,b) => (b.timestamp||'').localeCompare(a.timestamp||''));
+  writingIdx = { essays };
+  await saveJSON(DATA_BASE + '/writing/index.json', writingIdx);
+
+  // --- Rebuild listening/index.json from exam records ---
+  const listeningTests = [];
+  exams.forEach(e => {
+    if (e.scores?.listening == null && e.rawCorrect?.listening == null) return;
+    const err = e.errorDetails?.listening || {};
+    const allErrs = Array.isArray(err) ? err : [...(err.section1||[]),...(err.section2||[]),...(err.section3||[]),...(err.section4||[])];
+    listeningTests.push({
+      id: e.id + '-L',
+      examId: e.id,
+      source: e.source || '',
+      timestamp: e.timestamp,
+      correct: e.rawCorrect?.listening || 0,
+      total: 40,
+      totalQuestions: 40,
+      score: e.scores?.listening || null,
+      testName: e.source || '',
+      section: 0,
+      errors: allErrs
+    });
+  });
+  listeningIdx = { tests: listeningTests };
+  await saveJSON(DATA_BASE + '/listening/index.json', listeningIdx);
+
+  // --- Rebuild reading/index.json from exam records ---
+  const readingPassages = [];
+  exams.forEach(e => {
+    if (e.scores?.reading == null && e.rawCorrect?.reading == null) return;
+    const err = e.errorDetails?.reading || {};
+    const allErrs = Array.isArray(err) ? err : [...(err.passage1||[]),...(err.passage2||[]),...(err.passage3||[])];
+    readingPassages.push({
+      id: e.id + '-R',
+      examId: e.id,
+      source: e.source || '',
+      timestamp: e.timestamp,
+      correct: e.rawCorrect?.reading || 0,
+      total: 40,
+      totalQuestions: 40,
+      score: e.scores?.reading || null,
+      errors: allErrs
+    });
+  });
+  readingIdx = { passages: readingPassages };
+  await saveJSON(DATA_BASE + '/reading/index.json', readingIdx);
+
+  // --- Rebuild speaking/index.json from exam records ---
+  const speakingPractices = [];
+  exams.forEach(e => {
+    if (e.scores?.speaking == null) return;
+    speakingPractices.push({
+      id: e.id + '-S',
+      examId: e.id,
+      source: e.source || '',
+      timestamp: e.timestamp,
+      score: e.scores.speaking
+    });
+  });
+  speakingIdx = { practices: speakingPractices };
+  await saveJSON(DATA_BASE + '/speaking/index.json', speakingIdx);
+
+  // --- Rebuild history.json from exam records ---
+  const historyEntries = [];
+  exams.forEach(e => {
+    const sc = e.scores || {};
+    historyEntries.push({
+      id: e.id,
+      type: 'exam',
+      summary: `${e.source || ''} ${e.type === 'full' ? '全科模考' : e.type === 'half' ? '半模考' : '单科模考'}`,
+      timestamp: e.timestamp,
+      score: sc.overall,
+      file: 'data/exam/index.json',
+      details: {
+        listening: sc.listening,
+        reading: sc.reading,
+        writing: sc.writing,
+        speaking: sc.speaking,
+        source: e.source
+      }
+    });
+  });
+  history = { entries: historyEntries };
+  await saveJSON(DATA_BASE + '/history.json', history);
+
+  console.log('✅ syncProgressFromExams: progress + all module indexes + history rebuilt from', exams.length, 'exams');
+}
+// ============= END DATA SYNC =============
+
+// ============= NAVIGATION =============
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+
+    // Re-sync data and re-render the target page on each navigation
+    const page = btn.dataset.page;
+    await syncProgressFromExams();
+    if (page === 'overview') renderOverview();
+    else if (page === 'writing') await renderWriting();
+    else if (page === 'reading') await renderReading();
+    else if (page === 'listening') await renderListening();
+    else if (page === 'speaking') await renderSpeaking();
+    else if (page === 'vocab') await renderVocab();
+    else if (page === 'exam') { await renderExam(); await loadAnalysisReports(); }
+  });
+});
+
+// ============= HELPERS =============
+function trendArrow(current, previous) {
+  if (previous === null || previous === undefined || previous === 0) return '<span class="trend-flat">--</span>';
+  const diff = current - previous;
+  if (diff > 0.1) return `<span class="trend-up">+${diff.toFixed(1)}</span>`;
+  if (diff < -0.1) return `<span class="trend-down">${diff.toFixed(1)}</span>`;
+  return '<span class="trend-flat">0.0</span>';
+}
+
+function getOverallScore() {
+  const parts = [];
+  const l = (progress.listening.averageScore != null && progress.listening.averageScore > 0) ? progress.listening.averageScore : (profile.currentLevel.listening || 0);
+  const r = (progress.reading.averageScore != null && progress.reading.averageScore > 0) ? progress.reading.averageScore : (profile.currentLevel.reading || 0);
+  const w = (progress.writing.averageScore != null && progress.writing.averageScore > 0) ? progress.writing.averageScore : (profile.currentLevel.writing || 0);
+  const s = (progress.speaking.averageScore != null && progress.speaking.averageScore > 0) ? progress.speaking.averageScore : (profile.currentLevel.speaking || 0);
+  if (l > 0) parts.push(l);
+  if (r > 0) parts.push(r);
+  if (w > 0) parts.push(w);
+  if (s > 0) parts.push(s);
+  if (parts.length === 0) return 0;
+  const avg = parts.reduce((a,b) => a + b, 0) / parts.length;
+  // Use same IELTS rounding as calcOverall: .25→.5, .75→next integer
+  const floor = Math.floor(avg);
+  const frac = avg - floor;
+  if (frac < 0.25) return floor;
+  if (frac < 0.75) return floor + 0.5;
+  return floor + 1;
+}
+
+function getGapToTarget() {
+  const overall = getOverallScore();
+  return (profile.targetBand - overall).toFixed(1);
+}
+
+function formatDate(iso) {
+  if (!iso) return '--';
+  const d = new Date(iso);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function formatDateTime(iso) {
+  if (!iso) return '--';
+  const d = new Date(iso);
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+
+// ============= OVERVIEW PAGE =============
+function renderOverview() {
+  // Header
+  const examDate = profile.examDate ? new Date(profile.examDate) : null;
+  const daysLeft = examDate ? Math.ceil((examDate - new Date()) / (1000*60*60*24)) : '--';
+  document.getElementById('daysLeft').textContent = daysLeft;
+  document.getElementById('targetBand').textContent = 'Band ' + profile.targetBand;
+
+  // Score Cards
+  const subjects = Object.values(SUBJECTS);
+
+  let cardsHTML = '';
+  subjects.forEach(sub => {
+    const progressScore = progress[sub.key].averageScore;
+    const current = (progressScore != null && progressScore > 0) ? progressScore : (profile.currentLevel[sub.key] || 0);
+    const trend = progress[sub.key].trend;
+    const prev = trend.length >= 2 ? trend[trend.length - 2].score : null;
+    cardsHTML += `
+      <div class="score-card" style="border-top: 3px solid ${sub.color}">
+        <div class="label">${sub.label}</div>
+        <div class="value" style="color:${sub.color}">${current ? current.toFixed(1) : '--'}</div>
+        <div class="trend">${current ? trendArrow(current, prev) : '<span class="trend-flat">--</span>'}</div>
+      </div>`;
+  });
+  document.getElementById('scoreCards').innerHTML = cardsHTML;
+
+  // Overall Estimate
+  const overall = getOverallScore();
+  const gap = getGapToTarget();
+  const gapColor = parseFloat(gap) <= 0 ? 'var(--green)' : (parseFloat(gap) <= 0.5 ? 'var(--yellow)' : 'var(--red)');
+  document.getElementById('overallEstimate').innerHTML = `
+    <div class="item">
+      <div class="lbl">估算总分</div>
+      <div class="val" style="color:var(--accent)">${overall ? overall.toFixed(1) : '--'}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="item">
+      <div class="lbl">目标</div>
+      <div class="val" style="color:var(--text)">${profile.targetBand}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="item">
+      <div class="lbl">差距</div>
+      <div class="val" style="color:${gapColor}">${overall ? (parseFloat(gap) > 0 ? '-' + gap : '+' + Math.abs(gap)) : '--'}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="item">
+      <div class="lbl">每周备考</div>
+      <div class="val" style="color:var(--text-dim)">${profile.studyPlan.weeklyHours || '--'}h</div>
+    </div>
+  `;
+
+  // Radar Chart
+  const ctxRadar = document.getElementById('radarChart').getContext('2d');
+  if (window._radarChart) window._radarChart.destroy();
+  window._radarChart = new Chart(ctxRadar, {
+    type: 'radar',
+    data: {
+      labels: ['Listening', 'Reading', 'Writing', 'Speaking'],
+      datasets: [
+        {
+          label: '当前',
+          data: [
+            (progress.listening.averageScore != null && progress.listening.averageScore > 0) ? progress.listening.averageScore : (profile.currentLevel.listening || 0),
+            (progress.reading.averageScore != null && progress.reading.averageScore > 0) ? progress.reading.averageScore : (profile.currentLevel.reading || 0),
+            (progress.writing.averageScore != null && progress.writing.averageScore > 0) ? progress.writing.averageScore : (profile.currentLevel.writing || 0),
+            (progress.speaking.averageScore != null && progress.speaking.averageScore > 0) ? progress.speaking.averageScore : (profile.currentLevel.speaking || 0)
+          ],
+          backgroundColor: 'rgba(56,189,248,0.2)',
+          borderColor: '#38bdf8',
+          borderWidth: 2,
+          pointBackgroundColor: '#38bdf8',
+          pointRadius: 5,
+        },
+        {
+          label: '目标',
+          data: [profile.targetBand, profile.targetBand, profile.targetBand, profile.targetBand],
+          backgroundColor: 'rgba(129,140,248,0.05)',
+          borderColor: '#818cf8',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointBackgroundColor: '#818cf8',
+          pointRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          beginAtZero: false,
+          min: 4,
+          max: 9,
+          ticks: { stepSize: 1, color: '#64748b', backdropColor: 'transparent' },
+          grid: { color: 'rgba(148,163,184,0.15)' },
+          pointLabels: { color: '#94a3b8', font: { size: 12 } }
+        }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 20 } } }
+    }
+  });
+
+  // Trend Chart
+  const ctxTrend = document.getElementById('trendChart').getContext('2d');
+  if (window._trendChart) window._trendChart.destroy();
+  const allDates = new Set();
+  ['listening','reading','writing','speaking'].forEach(k => {
+    (progress[k].trend || []).forEach(t => allDates.add(t.date));
+  });
+  const sortedDates = Array.from(allDates).sort();
+  const colors = {};
+  for (const [k, v] of Object.entries(SUBJECTS)) colors[k] = v.color;
+
+  window._trendChart = new Chart(ctxTrend, {
+    type: 'line',
+    data: {
+      labels: sortedDates.map(d => formatDate(d)),
+      datasets: ['listening','reading','writing','speaking'].map(k => ({
+        label: {listening:'Listening',reading:'Reading',writing:'Writing',speaking:'Speaking'}[k],
+        data: sortedDates.map(d => {
+          const found = (progress[k].trend || []).find(t => t.date === d);
+          return found ? found.score : null;
+        }),
+        borderColor: colors[k],
+        backgroundColor: colors[k] + '20',
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: colors[k],
+        spanGaps: false,
+      })).concat([{
+        label: '目标 (' + profile.targetBand + ')',
+        data: sortedDates.map(() => profile.targetBand),
+        borderColor: '#818cf8',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+      }])
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 16, boxWidth: 12 } } }
+    }
+  });
+
+  // Recent Activity
+  const entries = (history.entries || []).slice().reverse().slice(0, 7);
+  let activityHTML = '';
+  if (entries.length === 0) {
+    activityHTML = '<div class="loading">暂无活动记录，开始训练后这里会显示最近活动</div>';
+  } else {
+    entries.forEach(e => {
+      const tagClass = {};
+      const tagName = {};
+      for (const [k, v] of Object.entries(SUBJECTS)) {
+        tagClass[k] = 'tag-' + k;
+        tagName[k] = v.labelCN || k;
+      }
+      const scoreStr = e.score ? ` Band ${e.score.toFixed(1)}` : '';
+      activityHTML += `
+        <div class="activity-item">
+          <span><span class="type-tag ${tagClass[e.type] || ''}">${tagName[e.type] || e.type}</span>${e.summary}</span>
+          <span style="color:var(--text-dim);font-size:0.8rem">${formatDateTime(e.timestamp)}${scoreStr}</span>
+        </div>`;
+    });
+  }
+  document.getElementById('recentActivity').innerHTML = activityHTML;
+
+}
+
+// ============= WRITING PAGE =============
+function renderWriting() {
+  const essays = writingIdx.essays || [];
+  const avg = progress.writing.averageScore || 0;
+  const total = progress.writing.totalEssays || essays.length;
+
+  document.getElementById('writingStats').innerHTML = `
+    <div class="stat-item"><div class="val">${total}</div><div class="lbl">总批改篇数</div></div>
+    <div class="stat-item"><div class="val">${avg ? avg.toFixed(1) : '--'}</div><div class="lbl">平均分</div></div>
+    <div class="stat-item"><div class="val">${progress.writing.task1Count || 0}</div><div class="lbl">Task 1</div></div>
+    <div class="stat-item"><div class="val">${progress.writing.task2Count || 0}</div><div class="lbl">Task 2</div></div>
+  `;
+
+  // Writing Trend
+  const trend = progress.writing.trend || [];
+  const ctxWT = document.getElementById('writingTrendChart').getContext('2d');
+  if (window._wtChart) window._wtChart.destroy();
+  window._wtChart = new Chart(ctxWT, {
+    type: 'line',
+    data: {
+      labels: trend.map(t => formatDate(t.date)),
+      datasets: [{
+        label: '写作分数',
+        data: trend.map(t => t.score),
+        borderColor: '#f87171',
+        backgroundColor: 'rgba(248,113,113,0.15)',
+        borderWidth: 2, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#f87171',
+      },{
+        label: '目标',
+        data: trend.map(() => profile.targetBand),
+        borderColor: '#818cf8', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }
+    }
+  });
+
+  // Writing Radar
+  const lastEssay = essays[0];
+  const ctxWR = document.getElementById('writingRadarChart').getContext('2d');
+  if (window._wrChart) window._wrChart.destroy();
+  if (lastEssay && lastEssay.scores) {
+    window._wrChart = new Chart(ctxWR, {
+      type: 'radar',
+      data: {
+        labels: ['Task Response', 'Coherence', 'Lexical', 'Grammar'],
+        datasets: [{
+          label: '当前',
+          data: [lastEssay.scores.tr, lastEssay.scores.cc, lastEssay.scores.lr, lastEssay.scores.gra],
+          backgroundColor: 'rgba(248,113,113,0.15)',
+          borderColor: '#f87171', borderWidth: 2, pointBackgroundColor: '#f87171', pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: { r: { beginAtZero: false, min: 4, max: 9, ticks: { stepSize: 1, color: '#64748b', backdropColor:'transparent' }, grid: { color: 'rgba(148,163,184,0.15)' }, pointLabels: { color: '#94a3b8', font: { size: 10 } } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  } else {
+    document.getElementById('writingRadarChart').parentElement.innerHTML += '<div class="loading">暂无数据，提交作文批改后显示</div>';
+  }
+
+  // History
+  let histHTML = '';
+  essays.slice(0, 5).forEach(e => {
+    histHTML += `<div class="activity-item">
+      <span>${e.taskType ? e.taskType.toUpperCase() : ''} · ${(e.question || '').slice(0, 40)}...</span>
+      <span style="color:var(--accent)">Band ${e.scores?.overall?.toFixed(1) || '--'}</span>
+    </div>`;
+  });
+  document.getElementById('writingHistory').innerHTML = histHTML || '<div class="loading">暂无记录，开始写作训练吧</div>';
+
+  // Weakness
+  const dimNames = WRITING_DIMENSIONS;
+  const weakCount = {};
+  essays.forEach(e => {
+    if (e.weakestDimension) weakCount[e.weakestDimension] = (weakCount[e.weakestDimension] || 0) + 1;
+  });
+  let weakHTML = '<div style="font-size:0.85rem; color:var(--text-dim)">最弱维度出现频率：</div>';
+  const sortedWeak = Object.entries(weakCount).sort((a,b) => b[1]-a[1]);
+  sortedWeak.forEach(([dim, count]) => {
+    weakHTML += `<div style="margin-top:8px;display:flex;justify-content:space-between"><span>${dimNames[dim] || dim}</span><span style="color:var(--red)">${count} 次</span></div>`;
+  });
+  document.getElementById('writingWeakness').innerHTML = weakHTML || '<div class="loading">暂无数据</div>';
+}
+
+// ============= READING PAGE =============
+function renderReading() {
+  const passages = readingIdx.passages || [];
+  const avg = progress.reading.averageScore || 0;
+  const total = progress.reading.totalTests || progress.reading.totalPassages || passages.length;
+
+  document.getElementById('readingStats').innerHTML = `
+    <div class="stat-item"><div class="val">${total}</div><div class="lbl">测试次数</div></div>
+    <div class="stat-item"><div class="val">${avg ? avg.toFixed(1) : '--'}</div><div class="lbl">平均分</div></div>
+    <div class="stat-item"><div class="val">${passages.reduce((s,p)=>s+(p.correct||0),0)}</div><div class="lbl">总正确题数</div></div>
+    <div class="stat-item"><div class="val">${passages.length ? Math.round(passages.reduce((s,p)=>s+(p.correct||0),0)/passages.reduce((s,p)=>s+(p.totalQuestions||0),0)*100) : 0}%</div><div class="lbl">总正确率</div></div>
+  `;
+
+  // Trend
+  const ctxRT = document.getElementById('readingTrendChart').getContext('2d');
+  if (window._rtChart) window._rtChart.destroy();
+  window._rtChart = new Chart(ctxRT, {
+    type: 'line',
+    data: {
+      labels: passages.slice().reverse().map(p => formatDate(p.timestamp)),
+      datasets: [{
+        label: '阅读分数',
+        data: passages.slice().reverse().map(p => p.score),
+        borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.15)',
+        borderWidth: 2, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#4ade80',
+      },{
+        label: '目标',
+        data: passages.map(() => profile.targetBand),
+        borderColor: '#818cf8', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }
+    }
+  });
+
+  // Type distribution
+  const typeCount = {};
+  passages.forEach(p => {
+    const t = p.weakestType || 'Other';
+    typeCount[t] = (typeCount[t] || 0) + 1;
+  });
+  const ctxRType = document.getElementById('readingTypeChart').getContext('2d');
+  if (window._rTypeChart) window._rTypeChart.destroy();
+  window._rTypeChart = new Chart(ctxRType, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(typeCount),
+      datasets: [{ data: Object.values(typeCount), backgroundColor: ['#f87171','#fb923c','#facc15','#4ade80','#38bdf8','#818cf8'], borderColor: 'transparent' }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 12 } } }
+    }
+  });
+
+  // History
+  let histHTML = '';
+  passages.slice().reverse().slice(0, 5).forEach(p => {
+    histHTML += `<div class="activity-item">
+      <span>${p.title || 'Unknown'}</span>
+      <span style="color:var(--green)">${p.correct}/${p.totalQuestions} · Band ${p.score}</span>
+    </div>`;
+  });
+  document.getElementById('readingHistory').innerHTML = histHTML || '<div class="loading">暂无记录，开始阅读练习吧</div>';
+
+  // Error history from passages data
+  let errHTML = '<div style="margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap">';
+  let totalErrCount = 0;
+  const passageErr = { 1:0, 2:0, 3:0 };
+  passages.forEach(p => {
+    const errs = p.errors || [];
+    totalErrCount += errs.length;
+    errs.forEach(q => {
+      const pas = q <= 13 ? 1 : q <= 27 ? 2 : 3;
+      passageErr[pas]++;
+    });
+  });
+  errHTML += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--red)">${totalErrCount}</div><div style="font-size:0.7rem;color:var(--text-dim)">总错题数</div></div>`;
+  [1,2,3].forEach(p => {
+    errHTML += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--green)">${passageErr[p] || 0}</div><div style="font-size:0.7rem;color:var(--text-dim)">Passage ${p}</div></div>`;
+  });
+  errHTML += '</div>';
+
+  // List recent errors
+  const recentErrors = [];
+  passages.slice().reverse().forEach(p => {
+    const errs = p.errors || [];
+    errs.forEach(q => {
+      recentErrors.push({ questionNum: q, source: p.source || '', timestamp: p.timestamp });
+    });
+  });
+  if (recentErrors.length > 0) {
+    errHTML += '<div style="max-height:200px;overflow-y:auto"><table style="width:100%;font-size:0.78rem;border-collapse:collapse"><tr style="color:var(--text-dim);font-size:0.7rem"><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">题号</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Passage</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">来源</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">日期</th></tr>';
+    recentErrors.slice(0, 20).forEach(e => {
+      const pas = e.questionNum <= 13 ? 1 : e.questionNum <= 27 ? 2 : 3;
+      errHTML += `<tr><td style="padding:4px 8px;color:var(--red);font-weight:600">Q${e.questionNum}</td><td style="padding:4px 8px;color:var(--text-dim)">P${pas}</td><td style="padding:4px 8px;color:var(--text-dim)">${e.source || ''}</td><td style="padding:4px 8px;color:var(--text-dim)">${formatDate(e.timestamp)}</td></tr>`;
+    });
+    errHTML += '</table></div>';
+  } else {
+    errHTML += '<div style="font-size:0.8rem;color:var(--text-dim)">暂无错题记录</div>';
+  }
+  document.getElementById('readingErrorHistory').innerHTML = errHTML;
+}
+
+// ============= LISTENING PAGE =============
+async function renderListening() {
+  const tests = listeningIdx.tests || [];
+  const avg = progress.listening.averageScore || 0;
+  const total = progress.listening.totalTests || tests.length;
+
+  document.getElementById('listeningStats').innerHTML = `
+    <div class="stat-item"><div class="val">${total}</div><div class="lbl">测试次数</div></div>
+    <div class="stat-item"><div class="val">${avg ? avg.toFixed(1) : '--'}</div><div class="lbl">平均分</div></div>
+    <div class="stat-item"><div class="val">${tests.reduce((s,t)=>s+(t.correct||0),0)}</div><div class="lbl">总正确题数</div></div>
+    <div class="stat-item"><div class="val">${tests.length ? Math.round(tests.reduce((s,t)=>s+(t.correct||0),0)/tests.reduce((s,t)=>s+(t.totalQuestions||0),0)*100) : 0}%</div><div class="lbl">总正确率</div></div>
+  `;
+
+  // Trend
+  const ctxLT = document.getElementById('listeningTrendChart').getContext('2d');
+  if (window._ltChart) window._ltChart.destroy();
+  window._ltChart = new Chart(ctxLT, {
+    type: 'line',
+    data: {
+      labels: tests.slice().reverse().map(t => t.section ? `S${t.section} · ${formatDate(t.timestamp)}` : `${t.testName || t.source || '模考'} · ${formatDate(t.timestamp)}`),
+      datasets: [{
+        label: '听力分数',
+        data: tests.slice().reverse().map(t => t.score),
+        borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.15)',
+        borderWidth: 2, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#38bdf8',
+      },{
+        label: '目标',
+        data: tests.map(() => profile.targetBand),
+        borderColor: '#818cf8', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', maxRotation: 45 }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }
+    }
+  });
+
+  // Section comparison
+  const secData = { 1:[], 2:[], 3:[], 4:[] };
+  tests.forEach(t => {
+    if (t.section && t.correct != null && t.totalQuestions) {
+      secData[t.section].push(t.correct / t.totalQuestions * 100);
+    }
+  });
+  const secAvgs = {};
+  Object.keys(secData).forEach(k => {
+    secAvgs[k] = secData[k].length ? (secData[k].reduce((a,b)=>a+b,0) / secData[k].length).toFixed(0) : 0;
+  });
+  const ctxLS = document.getElementById('listeningSectionChart').getContext('2d');
+  if (window._lsChart) window._lsChart.destroy();
+  window._lsChart = new Chart(ctxLS, {
+    type: 'bar',
+    data: {
+      labels: ['Section 1', 'Section 2', 'Section 3', 'Section 4'],
+      datasets: [{
+        label: '正确率 %',
+        data: [secAvgs[1]||0, secAvgs[2]||0, secAvgs[3]||0, secAvgs[4]||0],
+        backgroundColor: ['rgba(74,222,128,0.6)','rgba(250,204,21,0.6)','rgba(251,146,60,0.6)','rgba(248,113,113,0.6)'],
+        borderColor: ['#4ade80','#facc15','#fb923c','#f87171'],
+        borderWidth: 1.5, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { display: false } },
+        y: { max: 100, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // History
+  let histHTML = '';
+  tests.slice().reverse().slice(0, 5).forEach(t => {
+    const label = t.section ? `Section ${t.section}` : (t.testName || t.source || '模考');
+    const totalQ = t.totalQuestions || t.total || 40;
+    histHTML += `<div class="activity-item">
+      <span>${label}</span>
+      <span style="color:var(--accent)">${t.correct}/${totalQ} · Band ${t.score}</span>
+    </div>`;
+  });
+  document.getElementById('listeningHistory').innerHTML = histHTML || '<div class="loading">暂无记录，开始听力练习吧</div>';
+
+  // Error history from errors.json
+  const errorsData = await loadJSON(DATA_BASE + '/listening/errors.json') || { errors: [], aggregation: { bySection: { '1':0,'2':0,'3':0,'4':0 }, totalErrors: 0 } };
+  const allErrors = errorsData.errors || [];
+  const errAgg = errorsData.aggregation || { bySection: { '1':0,'2':0,'3':0,'4':0 }, totalErrors: 0 };
+
+  // Error history section
+  let errHTML = '<div style="margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap">';
+  errHTML += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--red)">${errAgg.totalErrors || allErrors.length}</div><div style="font-size:0.7rem;color:var(--text-dim)">总错题数</div></div>`;
+  [1,2,3,4].forEach(s => {
+    errHTML += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--accent)">${errAgg.bySection[s] || 0}</div><div style="font-size:0.7rem;color:var(--text-dim)">Section ${s}</div></div>`;
+  });
+  errHTML += '</div>';
+
+  // List recent errors
+  const recentErrors = allErrors.slice(-20).reverse();
+  if (recentErrors.length > 0) {
+    errHTML += '<div style="max-height:200px;overflow-y:auto"><table style="width:100%;font-size:0.78rem;border-collapse:collapse"><tr style="color:var(--text-dim);font-size:0.7rem"><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">题号</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Section</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">来源</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">日期</th></tr>';
+    recentErrors.forEach(e => {
+      errHTML += `<tr><td style="padding:4px 8px;color:var(--red);font-weight:600">Q${e.questionNum}</td><td style="padding:4px 8px;color:var(--text-dim)">S${e.section}</td><td style="padding:4px 8px;color:var(--text-dim)">${e.source || ''}</td><td style="padding:4px 8px;color:var(--text-dim)">${formatDate(e.timestamp)}</td></tr>`;
+    });
+    errHTML += '</table></div>';
+  } else {
+    errHTML += '<div style="font-size:0.8rem;color:var(--text-dim)">暂无错题记录</div>';
+  }
+  document.getElementById('listeningErrorHistory').innerHTML = errHTML;
+}
+
+// ============= SPEAKING PAGE =============
+function renderSpeaking() {
+  const practices = speakingIdx.practices || [];
+  const avg = progress.speaking.averageScore || 0;
+  const total = progress.speaking.totalPractices || practices.length;
+
+  document.getElementById('speakingStats').innerHTML = `
+    <div class="stat-item"><div class="val">${total}</div><div class="lbl">练习次数</div></div>
+    <div class="stat-item"><div class="val">${avg ? avg.toFixed(1) : '--'}</div><div class="lbl">自评均分</div></div>
+    <div class="stat-item"><div class="val">${(progress.speaking.coveredTopics||[]).length}</div><div class="lbl">已覆盖话题类</div></div>
+    <div class="stat-item"><div class="val">${practices.filter(p=>p.part==='part2').length}</div><div class="lbl">Part 2 练习</div></div>
+  `;
+
+  // Speaking Trend
+  const ctxST = document.getElementById('speakingTrendChart').getContext('2d');
+  if (window._stChart) window._stChart.destroy();
+  window._stChart = new Chart(ctxST, {
+    type: 'line',
+    data: {
+      labels: practices.slice().reverse().map(p => formatDate(p.timestamp)),
+      datasets: [{
+        label: '口语自评',
+        data: practices.slice().reverse().map(p => {
+          const sa = p.selfAssessment || {};
+          return ((sa.fluency||0)+(sa.vocabulary||0)+(sa.grammar||0)+(sa.pronunciation||0))/4;
+        }),
+        borderColor: '#f472b6', backgroundColor: 'rgba(244,114,182,0.15)',
+        borderWidth: 2, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#f472b6',
+      },{
+        label: '目标',
+        data: practices.map(() => profile.targetBand),
+        borderColor: '#818cf8', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }
+    }
+  });
+
+  // Speaking Radar
+  const lastPractice = practices[0];
+  const ctxSR = document.getElementById('speakingRadarChart').getContext('2d');
+  if (window._srChart) window._srChart.destroy();
+  if (lastPractice && lastPractice.selfAssessment) {
+    const sa = lastPractice.selfAssessment;
+    window._srChart = new Chart(ctxSR, {
+      type: 'radar',
+      data: {
+        labels: ['Fluency', 'Vocabulary', 'Grammar', 'Pronunciation'],
+        datasets: [{
+          data: [sa.fluency, sa.vocabulary, sa.grammar, sa.pronunciation],
+          backgroundColor: 'rgba(244,114,182,0.15)',
+          borderColor: '#f472b6', borderWidth: 2, pointBackgroundColor: '#f472b6', pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: { r: { beginAtZero: false, min: 4, max: 9, ticks: { stepSize: 1, color: '#64748b', backdropColor:'transparent' }, grid: { color: 'rgba(148,163,184,0.15)' }, pointLabels: { color: '#94a3b8', font: { size: 10 } } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  // Topic Coverage
+  const allTopics = SPEAKING_TOPICS.categories || [];
+  const covered = progress.speaking.coveredTopics || [];
+  let tcHTML = '';
+  // Count actual covered topics per category from practices
+  const coveredCount = {};
+  practices.forEach(p => {
+    if (p.topicCategory) coveredCount[p.topicCategory] = (coveredCount[p.topicCategory] || 0) + 1;
+  });
+  allTopics.forEach(t => {
+    const isCovered = covered.includes(t.cat);
+    const count = coveredCount[t.cat] || 0;
+    const pct = isCovered ? Math.min(100, Math.round(count / t.total * 100) || 10) : 0;
+    tcHTML += `
+      <div class="topic-bar">
+        <div class="name"><span>${t.cat} (${t.total}题)</span><span style="color:${isCovered?'var(--green)':'var(--text-dim)'}">${isCovered ? (count + '/' + t.total) : '未覆盖'}</span></div>
+        <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+  document.getElementById('topicCoverage').innerHTML = tcHTML;
+
+  // History
+  let histHTML = '';
+  practices.slice(0, 5).forEach(p => {
+    const sa = p.selfAssessment || {};
+    const avgScore = ((sa.fluency||0)+(sa.vocabulary||0)+(sa.grammar||0)+(sa.pronunciation||0))/4;
+    histHTML += `<div class="activity-item">
+      <span>${p.part ? p.part.toUpperCase() : ''} · ${p.topic || 'Unknown'}</span>
+      <span style="color:var(--pink)">${avgScore ? avgScore.toFixed(1) : '--'}</span>
+    </div>`;
+  });
+  document.getElementById('speakingHistory').innerHTML = histHTML || '<div class="loading">暂无记录，开始口语练习吧</div>';
+}
+
+// ============= VOCAB PAGE =============
+async function renderVocab() {
+  const stats = vocabIdx.stats || {};
+  let words = vocabIdx.words || [];
+  // Also load wordbank.json if it exists (skill writes vocabulary there)
+  const wordbank = await loadJSON(DATA_BASE + '/vocab/wordbank.json');
+  if (wordbank && wordbank.words && wordbank.words.length > 0) {
+    words = wordbank.words;
+    // Merge stats from wordbank if available
+    if (!stats.totalWords && wordbank.stats) Object.assign(stats, wordbank.stats);
+  }
+  // Try to load review-log for real data
+  const reviewLog = await loadJSON(DATA_BASE + '/vocab/review-log.json') || { logs: [] };
+  const logs = reviewLog.logs || [];
+
+  document.getElementById('vocabStats').innerHTML = `
+    <div class="vocab-stat"><div class="val">${stats.totalWords || words.length || 0}</div><div class="lbl">词库总量</div></div>
+    <div class="vocab-stat"><div class="val">${stats.mastered || words.filter(w=>w.level>=5).length || 0}</div><div class="lbl">已掌握</div></div>
+    <div class="vocab-stat"><div class="val">${stats.learning || words.filter(w=>w.level>0&&w.level<5).length || 0}</div><div class="lbl">学习中</div></div>
+    <div class="vocab-stat"><div class="val">${Math.round((stats.accuracy||0)*100)}%</div><div class="lbl">正确率</div></div>
+  `;
+
+  // Growth chart - build from review-log data if available
+  const ctxVG = document.getElementById('vocabGrowthChart').getContext('2d');
+  if (window._vgChart) window._vgChart.destroy();
+  const dates = [];
+  const masteredData = [];
+  const totalData = [];
+  // Build 14-day timeline from logs or fill with 0
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0,10);
+    dates.push((d.getMonth()+1)+'/'+d.getDate());
+    const log = logs.find(l => l.date && l.date.slice(0,10) === dateStr);
+    if (log) {
+      masteredData.push(log.mastered || 0);
+      totalData.push(log.reviewed || 0);
+    } else {
+      masteredData.push(0);
+      totalData.push(0);
+    }
+  }
+  // If no log data, use current stats
+  if (logs.length === 0) {
+    const mastered = stats.mastered || words.filter(w=>w.level>=5).length || 0;
+    const total = stats.totalWords || words.length || 0;
+    masteredData[masteredData.length - 1] = mastered;
+    totalData[totalData.length - 1] = total;
+  }
+  window._vgChart = new Chart(ctxVG, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: '已掌握词汇',
+        data: masteredData,
+        borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.15)',
+        borderWidth: 2, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#4ade80', fill: true,
+      },{
+        label: '词库总量',
+        data: totalData,
+        borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.1)',
+        borderWidth: 2, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#818cf8', fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 7 }, grid: { display: false } },
+        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }
+    }
+  });
+
+  // Accuracy chart - build from review-log
+  const ctxVA = document.getElementById('vocabAccuracyChart').getContext('2d');
+  if (window._vaChart) window._vaChart.destroy();
+  const accData = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0,10);
+    const log = logs.find(l => l.date && l.date.slice(0,10) === dateStr);
+    accData.push(log && log.accuracy != null ? Math.round(log.accuracy * 100) : null);
+  }
+  // If no log data, use current accuracy
+  if (logs.length === 0 && (stats.accuracy||0) > 0) {
+    accData[accData.length - 1] = Math.round((stats.accuracy||0)*100);
+  }
+  window._vaChart = new Chart(ctxVA, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: '复习正确率',
+        data: accData,
+        borderColor: '#facc15', backgroundColor: 'rgba(250,204,21,0.1)',
+        borderWidth: 2, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#facc15', fill: true, spanGaps: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 7 }, grid: { display: false } },
+        y: { min: 40, max: 100, ticks: { color: '#64748b', callback: v => v+'%' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true } } }
+    }
+  });
+
+  // Level distribution
+  const levelCount = { 0:0,1:0,2:0,3:0,4:0,5:0 };
+  words.forEach(w => { if (w.level !== undefined) levelCount[w.level] = (levelCount[w.level]||0)+1; });
+  const ctxVL = document.getElementById('vocabLevelChart').getContext('2d');
+  if (window._vlChart) window._vlChart.destroy();
+  window._vlChart = new Chart(ctxVL, {
+    type: 'bar',
+    data: {
+      labels: ['Lv0 新词','Lv1 1天','Lv2 3天','Lv3 7天','Lv4 14天','Lv5 30天'],
+      datasets: [{
+        data: [levelCount[0],levelCount[1],levelCount[2],levelCount[3],levelCount[4],levelCount[5]],
+        backgroundColor: ['rgba(148,163,184,0.4)','rgba(56,189,248,0.5)','rgba(56,189,248,0.6)','rgba(129,140,248,0.5)','rgba(129,140,248,0.7)','rgba(74,222,128,0.6)'],
+        borderColor: '#334155', borderWidth: 1, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Review queue
+  const now = new Date();
+  let queueHTML = '<div style="font-size:0.85rem; color:var(--text-dim); margin-bottom:12px">待复习词汇：</div>';
+  let dueCount = 0;
+  words.forEach(w => {
+    if (w.nextReview && new Date(w.nextReview) <= now && w.level < 5) {
+      dueCount++;
+      queueHTML += `<div class="activity-item">
+        <span><strong>${w.word}</strong> <span style="color:var(--text-dim);font-size:0.75rem">Lv${w.level} · ${w.scene||''}</span></span>
+        <span style="color:var(--orange);font-size:0.75rem">到期</span>
+      </div>`;
+    }
+  });
+  if (dueCount === 0) queueHTML += '<div style="color:var(--green);font-size:0.85rem">暂无到期词汇，开始添加词汇吧</div>';
+  document.getElementById('vocabQueue').innerHTML = queueHTML;
+}
+
+// ============= EXAM PAGE =============
+
+// Score conversion: raw correct answers → IELTS Band
+// NOTE: IELTS score conversion tables vary slightly per test. These are GENERAL approximations
+// based on typical Cambridge IELTS conversion tables. Each official test book provides its own
+// exact conversion. The margin of error is typically ±0.5 Band.
+// Data loaded from data/score-conversion.json at init
+function getListeningConv() { return SCORE_CONV.listening || []; }
+function getReadingConv() { return SCORE_CONV.reading || []; }
+
+function rawToBand(raw, conv) {
+  const r = Math.max(0, Math.min(40, parseInt(raw) || 0));
+  for (const [minCorrect, band] of conv) {
+    if (r >= minCorrect) return band;
+  }
+  return 2.5;
+}
+
+function calcOverall(l, r, w, s) {
+  const parts = [];
+  if (l != null) parts.push(l);
+  if (r != null) parts.push(r);
+  if (w != null) parts.push(w);
+  if (s != null) parts.push(s);
+  if (parts.length === 0) return null;
+  const avg = parts.reduce((a,b)=>a+b, 0) / parts.length;
+  // IELTS overall rounding: .25 → .5, .75 → next integer
+  const floor = Math.floor(avg);
+  const frac = avg - floor;
+  if (frac < 0.25) return floor;
+  if (frac < 0.75) return floor + 0.5;
+  return floor + 1;
+}
+
+// Populate cambridge dropdown from materials/
+function initExamCambridge() {
+  const sel = document.getElementById('examCambridge');
+  if (!sel) return;
+  // Try to detect available cambridge materials
+  const versions = [];
+  for (let i = 20; i >= 4; i--) {
+    versions.push({ val: i, label: 'Cambridge ' + i });
+  }
+  sel.innerHTML = '<option value="">选择…</option>' +
+    versions.map(v => `<option value="${v.val}">${v.label}</option>`).join('');
+
+  // Set default date to today
+  const dateInput = document.getElementById('examDate');
+  if (dateInput && !dateInput.value) {
+    const today = new Date().toISOString().slice(0, 10);
+    dateInput.value = today;
+  }
+}
+
+function updateEntryPreview() {
+  const preview = document.getElementById('examPreview');
+  const l = parseInt(document.getElementById('examL').value) || null;
+  const r = parseInt(document.getElementById('examR').value) || null;
+  const w = parseFloat(document.getElementById('examW').value) || null;
+  const s = parseFloat(document.getElementById('examS').value) || null;
+
+  if (l == null && r == null && w == null && s == null) {
+    preview.classList.remove('show');
+    return;
+  }
+
+  const lBand = l != null ? rawToBand(l, getListeningConv()) : null;
+  const rBand = r != null ? rawToBand(r, getReadingConv()) : null;
+  const overall = calcOverall(lBand, rBand, w, s);
+
+  let html = '<div class="score-line">';
+  if (lBand != null) html += `<div class="s-item">Listening: <span>${lBand.toFixed(1)}</span> (${l}/40)</div>`;
+  if (rBand != null) html += `<div class="s-item">Reading: <span>${rBand.toFixed(1)}</span> (${r}/40)</div>`;
+  if (w != null) html += `<div class="s-item">Writing: <span>${w.toFixed(1)}</span> (手动估分)</div>`;
+  if (s != null) html += `<div class="s-item">Speaking: <span>${s.toFixed(1)}</span></div>`;
+  if (overall != null) html += `<div class="s-item" style="color:var(--yellow)">Overall: <strong style="font-size:1.3rem">${overall.toFixed(1)}</strong></div>`;
+  // Show essay text status — AI scoring happens later via ielts-analysis skill
+  const t1Text = document.getElementById('essayT1Text').value.trim();
+  const t2Text = document.getElementById('essayT2Text').value.trim();
+  if (t1Text || t2Text) {
+    const t1Len = t1Text ? `T1: ${t1Text.length}字符` : '';
+    const t2Len = t2Text ? `T2: ${t2Text.length}字符` : '';
+    html += '<div style="margin-top:6px;font-size:0.7rem;color:var(--accent);background:rgba(99,102,241,0.08);padding:4px 8px;border-radius:4px">';
+    html += `📝 已录入作文（${[t1Len, t2Len].filter(Boolean).join(' / ')}），保存后发送「<b>智能解读</b>」一键评分`;
+    html += '</div>';
+  }
+  html += '</div>';
+  preview.innerHTML = html;
+  preview.classList.add('show');
+}
+
+async function saveExamEntry() {
+  const cambridge = document.getElementById('examCambridge').value;
+  const testNum = document.getElementById('examTest').value;
+  const dateStr = document.getElementById('examDate').value;
+  const l = parseInt(document.getElementById('examL').value) || null;
+  const r = parseInt(document.getElementById('examR').value) || null;
+  const w = parseFloat(document.getElementById('examW').value) || null;
+  const s = parseFloat(document.getElementById('examS').value) || null;
+
+  if (!cambridge || !testNum) { alert('请选择剑桥编号和 Test 编号'); return; }
+  if (!dateStr) { alert('请选择模考日期'); return; }
+  if (l == null && r == null && w == null && s == null) { alert('请至少录入一个科目的成绩'); return; }
+
+  const lBand = l != null ? rawToBand(l, getListeningConv()) : null;
+  const rBand = r != null ? rawToBand(r, getReadingConv()) : null;
+  const overall = calcOverall(lBand, rBand, w, s);
+
+  const source = `Cambridge ${cambridge} Test ${testNum}`;
+
+  // Determine type
+  const subjectCount = [l!=null,r!=null,w!=null,s!=null].filter(Boolean).length;
+  const type = subjectCount === 4 ? 'full' : (subjectCount >= 3 ? 'full' : (subjectCount === 2 ? 'half' : 'single'));
+
+  // Build error details (group by Section/Passage for analysis engine)
+  const lErrors = document.getElementById('examLErrors').value.trim();
+  const rErrors = document.getElementById('examRErrors').value.trim();
+  const errorDetails = {};
+  if (lErrors) {
+    const flatL = lErrors.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+    errorDetails.listening = groupListeningErrors(flatL);
+  }
+  if (rErrors) {
+    const flatR = rErrors.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+    errorDetails.reading = groupReadingErrors(flatR);
+  }
+
+  // Generate ID
+  const id = 'exam-' + Date.now();
+  const timestamp = new Date(dateStr + 'T12:00:00').toISOString();
+
+  // Collect essay data — store text for later AI scoring via ielts-analysis skill
+  const essayData = {};
+  let hasEssays = false;
+  const t1Text = document.getElementById('essayT1Text').value.trim();
+  const t2Text = document.getElementById('essayT2Text').value.trim();
+  if (t1Text) {
+    hasEssays = true;
+    essayData.task1 = { text: t1Text, scores: null, aiScored: false, question: '' };
+  }
+  if (t2Text) {
+    hasEssays = true;
+    essayData.task2 = { text: t2Text, scores: null, aiScored: false, question: '' };
+  }
+  const writingStatus = hasEssays ? 'pending' : (w != null ? 'manual' : 'none');
+  // Set analysisStatus: "pending" when there are L/R errors to analyze
+  const hasLErrors = lErrors && lErrors.trim();
+  const hasRErrors = rErrors && rErrors.trim();
+  const analysisStatus = (hasLErrors || hasRErrors) ? 'pending' : 'none';
+
+  const entry = {
+    id, timestamp, type,
+    source,
+    scores: {
+      listening: lBand,
+      reading: rBand,
+      writing: w,
+      speaking: s,
+      overall
+    },
+    rawCorrect: { listening: l, reading: r },
+    errorDetails,
+    essayData: hasEssays ? essayData : undefined,
+    writingStatus,
+    analysisStatus,
+    entryMethod: 'manual',
+    timeTaken: 0
+  };
+
+  // Load existing index
+  const examIdx = await loadJSON(DATA_BASE + '/exam/index.json') || { exams: [], stats: {} };
+  examIdx.exams = examIdx.exams || [];
+
+  // Check for duplicate (same source + same date)
+  const dupIdx = examIdx.exams.findIndex(e => e.source === source && e.timestamp && e.timestamp.slice(0,10) === dateStr);
+  if (dupIdx >= 0) {
+    if (!confirm(`已存在 ${source} (${dateStr}) 的模考记录，是否覆盖？`)) return;
+    examIdx.exams[dupIdx] = entry;
+  } else {
+    examIdx.exams.push(entry);
+  }
+
+  // Recalculate stats
+  const scorable = examIdx.exams.filter(e => e.scores && e.scores.overall != null);
+  examIdx.stats = {
+    totalExams: examIdx.exams.length,
+    bestOverall: scorable.length > 0 ? Math.max(...scorable.map(e => e.scores.overall)) : null,
+    averageOverall: scorable.length > 0 ? +(scorable.reduce((s,e) => s + e.scores.overall, 0) / scorable.length).toFixed(1) : null,
+    lastExamDate: examIdx.exams.length > 0 ? examIdx.exams.map(e => e.timestamp).sort().pop() : null
+  };
+
+  await saveJSON(DATA_BASE + '/exam/index.json', examIdx);
+
+  // *** Run error analysis and update all related data tables ***
+  await runErrorAnalysis(entry, cambridge, testNum, dateStr, l, r, w, s, lBand, rBand, overall);
+
+  // Show success
+  const preview = document.getElementById('examPreview');
+  let msg = '✅ 已保存！';
+  const needsAnalysis = analysisStatus === 'pending' || hasEssays;
+  if (needsAnalysis) {
+    msg += `<br><span style="color:var(--accent);font-size:0.75rem">💡 在 AI 助手对话框发送「<b>智能解读 ${id}</b>」获取逐题错因分析报告${hasEssays ? ' + 写作四维评分' : ''}</span>`;
+  } else {
+    msg += '<br><span style="color:var(--text-dim);font-size:0.75rem">本次模考无错题，无需解读</span>';
+  }
+  preview.innerHTML += `<div class="saved-msg">${msg}</div>`;
+  preview.classList.add('show');
+
+  // Refresh
+  setTimeout(async () => {
+    await syncProgressFromExams();
+    renderOverview();
+    await renderExam();
+    await loadAnalysisReports();
+    // Clear saved msg
+    const p = document.getElementById('examPreview');
+    if (p) p.querySelector('.saved-msg')?.remove();
+  }, 600);
+}
+
+// ============= ERROR ANALYSIS ENGINE (WEB SEARCH POWERED) =============
+
+
+// Listening: map question number → likely section
+function getListeningSection(qNum) {
+  if (qNum <= 10) return 1;
+  if (qNum <= 20) return 2;
+  if (qNum <= 30) return 3;
+  return 4;
+}
+
+// Reading: map question number → likely passage
+function getReadingPassage(qNum) {
+  if (qNum <= 13) return 1;
+  if (qNum <= 27) return 2;
+  return 3;
+}
+
+// Group flat error arrays into Section/Passage objects for analysis engine
+function groupListeningErrors(flatErrors) {
+  const grouped = { section1: [], section2: [], section3: [], section4: [] };
+  flatErrors.forEach(q => {
+    const sec = getListeningSection(q);
+    grouped['section' + sec].push(q);
+  });
+  return grouped;
+}
+
+function groupReadingErrors(flatErrors) {
+  const grouped = { passage1: [], passage2: [], passage3: [] };
+  flatErrors.forEach(q => {
+    const pas = getReadingPassage(q);
+    grouped['passage' + pas].push(q);
+  });
+  return grouped;
+}
+
+// Save error records to data files (no analysis, no web search)
+async function runErrorAnalysis(entry, cambridge, testNum, dateStr, l, r, w, s, lBand, rBand, overall) {
+  const errDetails = entry.errorDetails || {};
+  const lErrors = errDetails.listening || [];
+  const rErrors = errDetails.reading || [];
+  const hasListening = lErrors.length > 0 && l != null;
+  const hasReading = rErrors.length > 0 && r != null;
+
+  // Write to listening/errors.json
+  if (hasListening) {
+    const source = `Cambridge ${cambridge} Test ${testNum}`;
+    const listenErrors = await loadJSON(DATA_BASE + '/listening/errors.json') || { errors: [], aggregation: { bySection: { '1':0,'2':0,'3':0,'4':0 }, totalErrors: 0 }, lastUpdated: null };
+    listenErrors.errors = listenErrors.errors || [];
+    listenErrors.aggregation = listenErrors.aggregation || { bySection: { '1':0,'2':0,'3':0,'4':0 }, totalErrors: 0 };
+
+    lErrors.forEach(qNum => {
+      const section = getListeningSection(qNum);
+      listenErrors.errors.push({
+        questionNum: qNum,
+        section,
+        source,
+        timestamp: entry.timestamp,
+        examId: entry.id
+      });
+      listenErrors.aggregation.bySection[section] = (listenErrors.aggregation.bySection[section] || 0) + 1;
+      listenErrors.aggregation.totalErrors++;
+    });
+    listenErrors.lastUpdated = entry.timestamp;
+    await saveJSON(DATA_BASE + '/listening/errors.json', listenErrors);
+
+    // Update listening index
+    const lIdx = await loadJSON(DATA_BASE + '/listening/index.json') || { tests: [] };
+    lIdx.tests = lIdx.tests || [];
+    lIdx.tests.push({
+      source: entry.source,
+      timestamp: entry.timestamp,
+      score: lBand,
+      correct: l,
+      total: 40,
+      totalQuestions: 40,
+      testName: entry.source,
+      section: 0,
+      errors: lErrors,
+      examId: entry.id
+    });
+    await saveJSON(DATA_BASE + '/listening/index.json', lIdx);
+  }
+
+  // Write to reading/index.json
+  if (hasReading) {
+    const rIdx = await loadJSON(DATA_BASE + '/reading/index.json') || { passages: [] };
+    rIdx.passages = rIdx.passages || [];
+    rIdx.passages.push({
+      source: entry.source,
+      timestamp: entry.timestamp,
+      score: rBand,
+      correct: r,
+      total: 40,
+      errors: rErrors,
+      examId: entry.id
+    });
+    await saveJSON(DATA_BASE + '/reading/index.json', rIdx);
+  }
+
+  // Update progress and history
+  await updateProgressAndHistory(entry, dateStr);
+
+  // Show simple error record summary
+  if (hasListening || hasReading) {
+    showErrorRecordSummary(entry, lErrors, rErrors, l, r, lBand, rBand);
+  } else {
+    document.getElementById('errorReport').style.display = 'none';
+  }
+}
+
+async function updateProgressAndHistory(entry, dateStr) {
+  const prog = await loadJSON(DATA_BASE + '/progress.json') || {
+    listening: { totalTests:0, averageScore:null, trend:[], weakestType:null },
+    reading: { totalTests:0, totalPassages:0, averageScore:null, trend:[], weakestType:null },
+    writing: { totalEssays:0, averageScore:null, trend:[], weakestDimension:null, task1Count:0, task2Count:0 },
+    speaking: { totalPractices:0, averageScore:null, trend:[], coveredTopics:[] }
+  };
+  const sc = entry.scores || {};
+
+  // Update listening
+  if (sc.listening != null && entry.rawCorrect && entry.rawCorrect.listening != null) {
+    prog.listening = prog.listening || { totalTests:0, averageScore:null, trend:[], weakestType:null };
+    prog.listening.totalTests = (prog.listening.totalTests || 0) + 1;
+    prog.listening.trend = prog.listening.trend || [];
+    prog.listening.trend.push({ date: dateStr, score: sc.listening });
+    const scores = prog.listening.trend.map(t => t.score).filter(s => s != null);
+    prog.listening.averageScore = scores.length > 0 ? +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : sc.listening;
+  }
+
+  // Update reading
+  if (sc.reading != null && entry.rawCorrect && entry.rawCorrect.reading != null) {
+    prog.reading = prog.reading || { totalTests:0, totalPassages:0, averageScore:null, trend:[], weakestType:null };
+    prog.reading.totalTests = (prog.reading.totalTests || prog.reading.totalPassages || 0) + 1;
+    prog.reading.trend = prog.reading.trend || [];
+    prog.reading.trend.push({ date: dateStr, score: sc.reading });
+    const scores = prog.reading.trend.map(t => t.score).filter(s => s != null);
+    prog.reading.averageScore = scores.length > 0 ? +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : sc.reading;
+  }
+
+  // Update writing
+  if (sc.writing != null) {
+    prog.writing = prog.writing || { totalEssays:0, averageScore:null, trend:[], weakestDimension:null, task1Count:0, task2Count:0 };
+    prog.writing.totalEssays = (prog.writing.totalEssays || 0) + 1;
+    prog.writing.trend = prog.writing.trend || [];
+    prog.writing.trend.push({ date: dateStr, score: sc.writing });
+    const scores = prog.writing.trend.map(t => t.score).filter(s => s != null);
+    prog.writing.averageScore = scores.length > 0 ? +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : sc.writing;
+    // Derive task1Count/task2Count from writing index data
+    const wIdx = await loadJSON(DATA_BASE + '/writing/index.json') || { essays: [] };
+    const essays = wIdx.essays || [];
+    prog.writing.task1Count = essays.filter(e => e.taskType === 'task1').length;
+    prog.writing.task2Count = essays.filter(e => e.taskType === 'task2').length;
+  }
+
+  // Update speaking
+  if (sc.speaking != null) {
+    prog.speaking = prog.speaking || { totalPractices:0, averageScore:null, trend:[], coveredTopics:[] };
+    prog.speaking.totalPractices = (prog.speaking.totalPractices || 0) + 1;
+    prog.speaking.trend = prog.speaking.trend || [];
+    prog.speaking.trend.push({ date: dateStr, score: sc.speaking });
+    const scores = prog.speaking.trend.map(t => t.score).filter(s => s != null);
+    prog.speaking.averageScore = scores.length > 0 ? +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : sc.speaking;
+  }
+
+  prog.updatedAt = entry.timestamp;
+  await saveJSON(DATA_BASE + '/progress.json', prog);
+
+  // Update history.json
+  const hist = await loadJSON(DATA_BASE + '/history.json') || { entries: [] };
+  hist.entries = hist.entries || [];
+  hist.entries.push({
+    id: entry.id || ('exam-' + Date.now()),
+    type: 'exam',
+    summary: `${entry.source} ${entry.type === 'full' ? '全科模考' : entry.type === 'half' ? '半模考' : '单科模考'}`,
+    timestamp: entry.timestamp,
+    score: entry.scores.overall,
+    file: `data/exam/index.json`,
+    details: {
+      listening: entry.scores.listening,
+      reading: entry.scores.reading,
+      writing: entry.scores.writing,
+      speaking: entry.scores.speaking,
+      source: entry.source
+    }
+  });
+  await saveJSON(DATA_BASE + '/history.json', hist);
+}
+
+
+// ============= ERROR RECORD DISPLAY =============
+function showErrorRecordSummary(entry, lErrors, rErrors, l, r, lBand, rBand) {
+  const report = document.getElementById('errorReport');
+  report.style.display = 'block';
+
+  let html = '<div style="margin-bottom:16px"><h4 style="margin-bottom:12px">📝 错题记录</h4>';
+
+  // Listening errors
+  if (lErrors.length > 0) {
+    const bySection = {};
+    lErrors.forEach(qNum => {
+      const sec = getListeningSection(qNum);
+      bySection[sec] = (bySection[sec] || 0) + 1;
+    });
+    html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:700;margin-bottom:6px;color:var(--accent)">🎧 听力错题 (${lErrors.length}题) · 正确 ${l}/40 · Band ${lBand.toFixed(1)}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">`;
+    [1,2,3,4].forEach(s => {
+      const cnt = bySection[s] || 0;
+      html += `<span style="background:var(--bg);border-radius:4px;padding:4px 10px;font-size:0.78rem"><b>S${s}</b>: ${cnt}</span>`;
+    });
+    html += `</div>
+      <div style="font-size:0.82rem;color:var(--text-dim)">
+        错题号：${lErrors.sort((a,b)=>a-b).map(q => `<span style="color:var(--red);font-weight:600">Q${q}</span>`).join('、')}
+      </div>
+    </div>`;
+  }
+
+  // Reading errors
+  if (rErrors.length > 0) {
+    const byPassage = {};
+    rErrors.forEach(qNum => {
+      const pas = getReadingPassage(qNum);
+      byPassage[pas] = (byPassage[pas] || 0) + 1;
+    });
+    html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:700;margin-bottom:6px;color:var(--green)">📖 阅读错题 (${rErrors.length}题) · 正确 ${r}/40 · Band ${rBand.toFixed(1)}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">`;
+    [1,2,3].forEach(p => {
+      const cnt = byPassage[p] || 0;
+      html += `<span style="background:var(--bg);border-radius:4px;padding:4px 10px;font-size:0.78rem"><b>P${p}</b>: ${cnt}</span>`;
+    });
+    html += `</div>
+      <div style="font-size:0.82rem;color:var(--text-dim)">
+        错题号：${rErrors.sort((a,b)=>a-b).map(q => `<span style="color:var(--red);font-weight:600">Q${q}</span>`).join('、')}
+      </div>
+    </div>`;
+  }
+
+  html += '</div>';
+
+  // Link to error history
+  html += `<div style="margin-top:12px;font-size:0.82rem;color:var(--text-dim)">
+    💡 提示：所有错题已自动保存，可在各科目详情页查看完整错题历史。
+  </div>`;
+
+  document.getElementById('reportContent').innerHTML = html;
+  document.getElementById('reportSummary').innerHTML = '';
+}
+
+function toggleErrorReport() {
+  const body = document.getElementById('errorReportBody');
+  const toggle = document.querySelector('#errorReport .collapse-toggle');
+  if (!body || !toggle) return;
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    toggle.textContent = '收起 ▲';
+  } else {
+    body.style.display = 'none';
+    toggle.textContent = '展开 ▼';
+  }
+}
+
+function resetExamEntry() {
+  ['examL','examR','examW','examS','examLErrors','examRErrors','essayT1Text','essayT2Text'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  // Reset char counts
+  ['essayT1Count','essayT2Count'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '0 字符';
+  });
+  document.getElementById('examPreview').classList.remove('show');
+  document.getElementById('examPreview').innerHTML = '';
+  document.getElementById('errorReport').style.display = 'none';
+}
+
+// ============= ESSAY TEXT INPUT =============
+
+function updateEssayCharCount(taskType) {
+  const textarea = document.getElementById('essay' + taskType.toUpperCase() + 'Text');
+  const countEl = document.getElementById('essay' + taskType.toUpperCase() + 'Count');
+  if (textarea && countEl) {
+    const len = textarea.value.length;
+    countEl.textContent = len + ' 字符' + (len > 0 ? ' · 约 ' + Math.round(len / 5) + ' 词' : '');
+  }
+}
+
+// ============= AI ESSAY SCORING DISPLAY =============
+// Writing scoring is handled by the ielts-analysis skill via 「智能解读」command.
+// Users paste essays in the exam form as text, then send 「智能解读 exam-id」in the chat dialog.
+// The skill reads essay data from exam records, scores them, and writes results back.
+
+function renderEssayScoreResult(scores, taskType) {
+  if (!scores) return '';
+  const dims = taskType === 'task1'
+    ? [['TA','任务完成度'],['CC','连贯衔接'],['LR','词汇资源'],['GRA','语法准确性']]
+    : [['TR','任务回应度'],['CC','连贯衔接'],['LR','词汇资源'],['GRA','语法准确性']];
+
+  let dimsHTML = '<div class="essay-score-dimensions">';
+  dims.forEach(([key, label]) => {
+    const val = scores[key.toLowerCase()];
+    dimsHTML += `<div class="essay-score-dim"><div class="dim-label">${key}</div><div class="dim-val">${val != null ? val.toFixed(1) : '--'}</div></div>`;
+  });
+  dimsHTML += '</div>';
+
+  return `
+    <span class="essay-score-status scored">✅ ${taskType === 'task1' ? 'T1' : 'T2'} AI 评分：${scores.overall.toFixed(1)}</span>
+    ${dimsHTML}
+  `;
+}
+
+function toggleExamEntry() {
+  const body = document.getElementById('examEntryBody');
+  const toggle = document.querySelector('.collapse-toggle');
+  body.classList.toggle('collapsed');
+  toggle.textContent = body.classList.contains('collapsed') ? '展开 ▼' : '收起 ▲';
+}
+
+async function renderExam() {
+  const examIdx = await loadJSON(DATA_BASE + '/exam/index.json') || { exams: [], stats: {} };
+  const exams = examIdx.exams || [];
+  const stats = examIdx.stats || {};
+
+  // Stats row
+  document.getElementById('examStats').innerHTML = `
+    <div class="stat-item"><div class="val">${stats.totalExams || exams.length || 0}</div><div class="lbl">模考次数</div></div>
+    <div class="stat-item"><div class="val">${stats.bestOverall != null ? stats.bestOverall.toFixed(1) : '--'}</div><div class="lbl">最佳总分</div></div>
+    <div class="stat-item"><div class="val">${stats.averageOverall != null ? stats.averageOverall.toFixed(1) : '--'}</div><div class="lbl">平均总分</div></div>
+    <div class="stat-item"><div class="val">${stats.lastExamDate ? formatDate(stats.lastExamDate) : '--'}</div><div class="lbl">最近模考</div></div>
+  `;
+
+  // Trend chart - overall scores over time
+  const ctxET = document.getElementById('examTrendChart').getContext('2d');
+  if (window._etChart) window._etChart.destroy();
+  const sortedExams = [...exams].sort((a,b) => (a.timestamp||'').localeCompare(b.timestamp||''));
+  window._etChart = new Chart(ctxET, {
+    type: 'line',
+    data: {
+      labels: sortedExams.map(e => formatDate(e.timestamp)),
+      datasets: [{
+        label: '模考总分',
+        data: sortedExams.map(e => e.scores?.overall || null),
+        borderColor: '#facc15', backgroundColor: 'rgba(250,204,21,0.15)',
+        borderWidth: 2.5, tension: 0.3, pointRadius: 6, pointBackgroundColor: '#facc15',
+        spanGaps: true,
+      },{
+        label: '目标 (' + (profile.targetBand || 7) + ')',
+        data: sortedExams.map(() => profile.targetBand || 7),
+        borderColor: '#818cf8', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 16 } } }
+    }
+  });
+
+  // Radar chart - latest exam 4-subject scores (sorted by timestamp)
+  const sortedExamsByTime = [...exams].sort((a,b) => (a.timestamp||'').localeCompare(b.timestamp||''));
+  const lastExam = sortedExamsByTime.length > 0 ? sortedExamsByTime[sortedExamsByTime.length - 1] : null;
+  const ctxER = document.getElementById('examRadarChart').getContext('2d');
+  if (window._erChart) window._erChart.destroy();
+  if (lastExam && lastExam.scores) {
+    const sc = lastExam.scores;
+    window._erChart = new Chart(ctxER, {
+      type: 'radar',
+      data: {
+        labels: ['Listening', 'Reading', 'Writing', 'Speaking'],
+        datasets: [
+          {
+            label: '模考分数',
+            data: [sc.listening || 0, sc.reading || 0, sc.writing || 0, sc.speaking || 0],
+            backgroundColor: 'rgba(250,204,21,0.2)',
+            borderColor: '#facc15', borderWidth: 2, pointBackgroundColor: '#facc15', pointRadius: 5,
+          },
+          {
+            label: '目标',
+            data: [profile.targetBand||7, profile.targetBand||7, profile.targetBand||7, profile.targetBand||7],
+            backgroundColor: 'rgba(129,140,248,0.05)',
+            borderColor: '#818cf8', borderWidth: 2, borderDash: [6,4],
+            pointBackgroundColor: '#818cf8', pointRadius: 3,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: { r: { beginAtZero: false, min: 4, max: 9, ticks: { stepSize: 1, color: '#64748b', backdropColor: 'transparent' }, grid: { color: 'rgba(148,163,184,0.15)' }, pointLabels: { color: '#94a3b8', font: { size: 12 } } } },
+        plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 20 } } }
+      }
+    });
+  } else {
+    document.getElementById('examRadarChart').parentElement.innerHTML += '<div class="loading" style="text-align:center;padding:20px">暂无模考记录</div>';
+  }
+
+  // Subject trend chart - 4-subject changes across exams
+  const ctxES = document.getElementById('examSubjectChart').getContext('2d');
+  if (window._esChart) window._esChart.destroy();
+  const subjectColors = {};
+  const subjectNames = {};
+  for (const [k, v] of Object.entries(SUBJECTS)) {
+    subjectColors[k] = v.color;
+    subjectNames[k] = v.label;
+  }
+  window._esChart = new Chart(ctxES, {
+    type: 'line',
+    data: {
+      labels: sortedExams.map(e => formatDate(e.timestamp) + (e.type ? ' · ' + (EXAM_TYPE_LABELS[e.type] || e.type) : '')),
+      datasets: Object.keys(subjectColors).map(k => ({
+        label: subjectNames[k],
+        data: sortedExams.map(e => e.scores ? e.scores[k] : null),
+        borderColor: subjectColors[k],
+        backgroundColor: subjectColors[k] + '20',
+        borderWidth: 2, tension: 0.3, pointRadius: 4, pointBackgroundColor: subjectColors[k],
+        spanGaps: true,
+      }))
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 12, maxRotation: 45 }, grid: { display: false } },
+        y: { min: 4, max: 9, ticks: { color: '#64748b', stepSize: 0.5 }, grid: { color: 'rgba(148,163,184,0.1)' } }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', usePointStyle: true, padding: 12, boxWidth: 10 } } }
+    }
+  });
+
+  // History list
+  const typeLabel = EXAM_TYPE_LABELS;
+  let histHTML = '';
+  if (exams.length === 0) {
+    histHTML = '<div class="loading">暂无模考记录。<br>对 AI 说「模考」开始第一次模拟考试</div>';
+  } else {
+    [...exams].reverse().slice(0, 10).forEach((e, idx) => {
+      const sc = e.scores || {};
+      const raw = e.rawCorrect || {};
+      const subDetails = [];
+      if (sc.listening != null) {
+        const lStr = raw.listening != null ? ` (${raw.listening}/40)` : '';
+        subDetails.push('L:' + sc.listening.toFixed(1) + lStr);
+      }
+      if (sc.reading != null) {
+        const rStr = raw.reading != null ? ` (${raw.reading}/40)` : '';
+        subDetails.push('R:' + sc.reading.toFixed(1) + rStr);
+      }
+      if (sc.writing != null) subDetails.push('W:' + sc.writing.toFixed(1));
+      if (sc.speaking != null) subDetails.push('S:' + sc.speaking.toFixed(1));
+      // Show writing AI scoring status
+      const ws = e.writingStatus;
+      let wsBadge = '';
+      if (ws === 'pending') wsBadge = ' <span style="color:var(--yellow);font-size:0.65rem">⏳写作待批</span>';
+      else if (ws === 'partial') wsBadge = ' <span style="color:var(--yellow);font-size:0.65rem">⏳部分待批</span>';
+      else if (ws === 'scored') wsBadge = ' <span style="color:var(--green);font-size:0.65rem">🤖AI已评分</span>';
+
+      // Show analysis status badge
+      const as = e.analysisStatus;
+      let asBadge = '';
+      if (as === 'pending') asBadge = ' <span style="color:var(--orange);font-size:0.65rem">🔍待解读</span>';
+      else if (as === 'scored') asBadge = ' <span style="color:var(--green);font-size:0.65rem">📖已解读</span>';
+
+      const overallStr = sc.overall != null ? sc.overall.toFixed(1) : '--';
+      const timeStr = e.timeTaken ? (e.timeTaken + 'min') : (e.timeLimit ? '限时'+e.timeLimit+'min' : '');
+      const entryTag = e.entryMethod === 'manual' ? ' 📋' : '';
+      // Check if has errors
+      const errDetails = e.errorDetails || {};
+      const hasErrors = (errDetails.listening && Object.values(errDetails.listening).some(a => Array.isArray(a) && a.length > 0)) || (errDetails.reading && Object.values(errDetails.reading).some(a => Array.isArray(a) && a.length > 0));
+      const clickHint = hasErrors ? ' 🔍 点击查看错题' : '';
+      histHTML += `
+        <div class="activity-item exam-clickable" onclick="showExamErrorDetail('${e.id}')" title="${hasErrors ? '点击查看错题记录' : '无错题记录'}">
+          <span><span class="type-tag tag-reading">${typeLabel[e.type] || e.type || '模考'}${entryTag}</span>${e.source || ''} · ${subDetails.join(' / ') || '未评分'}${wsBadge}${asBadge}<span style="color:var(--text-dim);font-size:0.7rem">${clickHint}</span></span>
+          <span style="color:var(--text-dim);font-size:0.8rem">${formatDate(e.timestamp)} ${timeStr} <strong style="color:var(--yellow);margin-left:8px">${overallStr}</strong></span>
+        </div>`;
+    });
+  }
+  document.getElementById('examHistory').innerHTML = histHTML;
+}
+
+// ============= EXAM ERROR DETAIL VIEW =============
+async function showExamErrorDetail(examId) {
+  // Load exam data
+  const examIdx = await loadJSON(DATA_BASE + '/exam/index.json') || { exams: [] };
+  const exams = examIdx.exams || [];
+  const exam = exams.find(e => e.id === examId);
+  if (!exam) return;
+
+  const errDetails = exam.errorDetails || {};
+  let lErrors = errDetails.listening || [];
+  let rErrors = errDetails.reading || [];
+  // Normalize: if grouped object, flatten to array for display
+  if (!Array.isArray(lErrors)) {
+    lErrors = [...(lErrors.section1||[]),...(lErrors.section2||[]),...(lErrors.section3||[]),...(lErrors.section4||[])];
+  }
+  if (!Array.isArray(rErrors)) {
+    rErrors = [...(rErrors.passage1||[]),...(rErrors.passage2||[]),...(rErrors.passage3||[])];
+  }
+  const hasL = lErrors.length > 0;
+  const hasR = rErrors.length > 0;
+
+  // Also load listening/errors.json and reading/index.json to find matching entries by examId
+  const [listenErrorsData, readingIdxData] = await Promise.all([
+    loadJSON(DATA_BASE + '/listening/errors.json'),
+    loadJSON(DATA_BASE + '/reading/index.json')
+  ]);
+  const allListenErrors = (listenErrorsData?.errors || []).filter(e => e.examId === examId);
+  const allReadingErrors = (readingIdxData?.passages || []).filter(p => p.examId === examId);
+
+  const sc = exam.scores || {};
+  const raw = exam.rawCorrect || {};
+
+  // Build HTML
+  let html = `<div class="exam-error-panel">
+    <button class="close-btn" onclick="closeExamErrorDetail()">✕</button>
+    <h3>📝 模考详情 · 错题记录</h3>
+    <div class="subtitle">${exam.source || ''} · ${formatDate(exam.timestamp)} · 总分 ${sc.overall != null ? sc.overall.toFixed(1) : '--'}</div>`;
+
+  // Listening errors
+  if (hasL || allListenErrors.length > 0) {
+    // Merge errors from exam entry + stored errors
+    const storedErrors = allListenErrors.length > 0
+      ? allListenErrors.map(e => e.questionNum)
+      : [];
+    const allQNums = [...new Set([...lErrors, ...storedErrors])].sort((a,b) => a-b);
+    const bySection = {};
+    allQNums.forEach(q => {
+      const sec = getListeningSection(q);
+      bySection[sec] = (bySection[sec] || 0) + 1;
+    });
+
+    html += `<div class="exam-error-subject">
+      <div class="subject-header" style="color:var(--accent)">🎧 听力错题 (${allQNums.length}题) · 正确 ${raw.listening != null ? raw.listening : '--'}/40 · Band ${sc.listening != null ? sc.listening.toFixed(1) : '--'}</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">`;
+    [1,2,3,4].forEach(s => {
+      const cnt = bySection[s] || 0;
+      html += `<span style="background:var(--card);border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:0.75rem"><b>S${s}</b>: ${cnt}</span>`;
+    });
+    html += `</div>
+      <div class="error-tags">`;
+    allQNums.forEach(q => {
+      const sec = getListeningSection(q);
+      html += `<span class="error-tag" title="Section ${sec}">Q${q}</span>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // Reading errors
+  if (hasR || allReadingErrors.length > 0) {
+    const storedErrors = allReadingErrors.length > 0
+      ? allReadingErrors.flatMap(p => p.errors || [])
+      : [];
+    const allQNums = [...new Set([...rErrors, ...storedErrors])].sort((a,b) => a-b);
+    const byPassage = {};
+    allQNums.forEach(q => {
+      const pas = getReadingPassage(q);
+      byPassage[pas] = (byPassage[pas] || 0) + 1;
+    });
+
+    html += `<div class="exam-error-subject">
+      <div class="subject-header" style="color:var(--green)">📖 阅读错题 (${allQNums.length}题) · 正确 ${raw.reading != null ? raw.reading : '--'}/40 · Band ${sc.reading != null ? sc.reading.toFixed(1) : '--'}</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">`;
+    [1,2,3].forEach(p => {
+      const cnt = byPassage[p] || 0;
+      html += `<span style="background:var(--card);border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:0.75rem"><b>P${p}</b>: ${cnt}</span>`;
+    });
+    html += `</div>
+      <div class="error-tags">`;
+    allQNums.forEach(q => {
+      const pas = getReadingPassage(q);
+      html += `<span class="error-tag" title="Passage ${pas}">Q${q}</span>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // Essay data display
+  const essayData = exam.essayData;
+  if (essayData && (essayData.task1 || essayData.task2)) {
+    html += `<div class="exam-error-subject">
+      <div class="subject-header" style="color:var(--red)">✏️ 写作评估</div>`;
+    if (essayData.task1) {
+      const t1 = essayData.task1;
+      const t1Score = t1.scores ? (t1.scores.overall || (t1.scores.taskAchievement ? (t1.scores.taskAchievement + t1.scores.coherence + t1.scores.lexical + t1.scores.grammar) / 4 : null)) : null;
+      html += `<div style="margin:6px 0"><b>Task 1</b>${t1Score != null ? ' · Band <b>' + t1Score.toFixed(1) + '</b>' : ' · 未评分'}`;
+      if (t1.scores) {
+        html += `<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">`;
+        const t1Dims = [
+          ['TA', t1.scores.taskAchievement ?? t1.scores.ta],
+          ['CC', t1.scores.coherence ?? t1.scores.cc],
+          ['LR', t1.scores.lexical ?? t1.scores.lr],
+          ['GRA', t1.scores.grammar ?? t1.scores.gra]
+        ];
+        t1Dims.forEach(([label, val]) => {
+          html += `<span style="background:var(--card);border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:0.7rem">${label}: ${val != null ? val.toFixed(1) : '--'}</span>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+    if (essayData.task2) {
+      const t2 = essayData.task2;
+      const t2Score = t2.scores ? (t2.scores.overall || (t2.scores.taskResponse ? (t2.scores.taskResponse + t2.scores.coherence + t2.scores.lexical + t2.scores.grammar) / 4 : null)) : null;
+      html += `<div style="margin:6px 0"><b>Task 2</b>${t2Score != null ? ' · Band <b>' + t2Score.toFixed(1) + '</b>' : ' · 未评分'}`;
+      if (t2.scores) {
+        html += `<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">`;
+        const t2Dims = [
+          ['TR', t2.scores.taskResponse ?? t2.scores.tr],
+          ['CC', t2.scores.coherence ?? t2.scores.cc],
+          ['LR', t2.scores.lexical ?? t2.scores.lr],
+          ['GRA', t2.scores.grammar ?? t2.scores.gra]
+        ];
+        t2Dims.forEach(([label, val]) => {
+          html += `<span style="background:var(--card);border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:0.7rem">${label}: ${val != null ? val.toFixed(1) : '--'}</span>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  if (!hasL && !hasR && allListenErrors.length === 0 && allReadingErrors.length === 0) {
+    html += `<div class="exam-error-no-data">✅ 本次模考没有记录错题</div>`;
+    // 即使没有错题，如果还没生成报告，也显示智能解读提示（含写作评分）
+    const as = exam.analysisStatus || 'none';
+    const ws = exam.writingStatus || 'none';
+    if (as !== 'scored' || ws !== 'scored') {
+      const hasEssays = exam.essayData && (exam.essayData.task1 || exam.essayData.task2);
+      const hint = hasEssays ? '逐题错因分析报告 + 写作四维评分' : '逐题错因分析报告';
+      html += `<div class="exam-error-actions">
+        <div style="color:var(--accent);padding:8px 0;font-size:0.85rem">💡 请在 AI 助手对话框中发送「<b>智能解读 ${examId}</b>」一键获取${hint}。<br><small style="color:var(--text-dim)">报告生成后将自动显示在「模考解读报告」区域。</small></div>
+        <div class="exam-error-analysis-result" id="modalAnalysisResult_${examId}"></div>
+      </div>`;
+    }
+  } else {
+    // 提示去 AI 助手进行智能解读（异步回填模式，一个指令同时处理 L/R 分析 + 写作评分）
+    const as = exam.analysisStatus || 'none';
+    const ws = exam.writingStatus || 'none';
+    let analysisHint = '';
+    if (as === 'scored' && ws === 'scored') {
+      analysisHint = `<div style="color:var(--green);padding:8px 0;font-size:0.85rem">✅ 已生成完整智能解读报告（含写作评分）。刷新页面后在「模考解读报告」区域查看。</div>`;
+    } else if (as === 'scored') {
+      analysisHint = `<div style="color:var(--green);padding:8px 0;font-size:0.85rem">✅ 已生成智能解读报告。刷新页面后在「模考解读报告」区域查看。</div>`;
+    } else {
+      const hasEssays = exam.essayData && (exam.essayData.task1 || exam.essayData.task2);
+      const hint = hasEssays ? '逐题错因分析报告 + 写作四维评分' : '逐题错因分析报告';
+      analysisHint = `<div style="color:var(--accent);padding:8px 0;font-size:0.85rem">💡 请在 AI 助手对话框中发送「<b>智能解读 ${examId}</b>」一键获取${hint}。<br><small style="color:var(--text-dim)">报告生成后将自动显示在「模考解读报告」区域。</small></div>`;
+    }
+    html += `<div class="exam-error-actions">
+      ${analysisHint}
+      <div class="exam-error-analysis-result" id="modalAnalysisResult_${examId}"></div>
+    </div>`;
+  }
+
+  html += `</div>`;
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'exam-error-overlay';
+  overlay.id = 'examErrorOverlay';
+  overlay.innerHTML = html;
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeExamErrorDetail();
+  });
+  document.body.appendChild(overlay);
+}
+
+function closeExamErrorDetail() {
+  const overlay = document.getElementById('examErrorOverlay');
+  if (overlay) overlay.remove();
+}
+
+// ============= ANALYSIS REPORT ENGINE =============
+
+// ===== 逐题详解数据库 =====
+// 已知试卷的答案和解析从外部 JSON 文件异步加载。
+// 如果你有整理好的答案数据，将 known-answers.json 放入 data/ 目录即可自动加载。
+// 未收录的试卷将使用通用分析模板。
+let KNOWN_ANSWERS = {};
+let knownAnswersLoaded = false;
+
+(function loadKnownAnswers() {
+  fetch('data/known-answers.json')
+    .then(res => {
+      if (!res.ok) throw new Error('Not found');
+      return res.json();
+    })
+    .then(data => {
+      KNOWN_ANSWERS = data;
+      knownAnswersLoaded = true;
+      console.log('[known-answers] 答案库已加载，包含 ' + Object.keys(data).length + ' 套试卷');
+    })
+    .catch(() => {
+      console.log('[known-answers] 未找到 data/known-answers.json，将使用通用分析模板。');
+    });
+})();
+
+// Analysis reason templates by question type — loaded from data/error-reasons.json
+function getListeningReasons() { return ERROR_REASONS.listening || {}; }
+function getReadingReasons() { return ERROR_REASONS.reading || {}; }
+
+// Look up detailed explanation for a specific question
+function getQuestionExplanation(source, examAnswers, qNum, isListening) {
+  if (!examAnswers || !examAnswers.explanations) return null;
+  const prefix = isListening ? 'L' : 'R';
+  return examAnswers.explanations[prefix + qNum] || null;
+}
+
+function formatAnswerForDisplay(sectionAnswers, qNum, section) {
+  if (!sectionAnswers || !sectionAnswers.answers) return '?';
+  const idx = section === 'section1' ? qNum - 1 :
+              section === 'section2' ? qNum - 11 :
+              section === 'section3' ? qNum - 21 :
+              qNum - 31; // section4
+  if (idx >= 0 && idx < sectionAnswers.answers.length) {
+    let ans = sectionAnswers.answers[idx];
+    if (typeof ans === 'string' && ans.includes(',')) {
+      return ans; // multi-select
+    }
+    return ans;
+  }
+  return '?';
+}
+
+function formatReadingAnswerDisplay(passageAnswers, qNum, passageNum) {
+  if (!passageAnswers || !passageAnswers.answers) return '?';
+  const idx = passageNum === 1 ? qNum - 1 :
+              passageNum === 2 ? qNum - 14 :
+              qNum - 28; // passage3
+  if (idx >= 0 && idx < passageAnswers.answers.length) {
+    return passageAnswers.answers[idx];
+  }
+  return '?';
+}
+
+// ===== 构建逐题详解报告 =====
+// 每道错题展开为独立小节，包含：题目信息、正确答案、错因分析、原文定位、解题思路、词汇提示
+function buildAnalysisReport(exam, answers) {
+  const sc = exam.scores || {};
+  const raw = exam.rawCorrect || {};
+  const err = exam.errorDetails || {};
+  const source = exam.source || '';
+
+  // Normalize errorDetails to grouped format (compatible with flat arrays from older data)
+  let lErrors = err.listening || {};
+  let rErrors = err.reading || {};
+  if (Array.isArray(lErrors)) {
+    lErrors = groupListeningErrors(lErrors);
+  }
+  if (Array.isArray(rErrors)) {
+    rErrors = groupReadingErrors(rErrors);
+  }
+
+  const lAllErrors = [...(lErrors.section1||[]),...(lErrors.section2||[]),...(lErrors.section3||[]),...(lErrors.section4||[])];
+  const rAllErrors = [...(rErrors.passage1||[]),...(rErrors.passage2||[]),...(rErrors.passage3||[])];
+  const totalErrors = lAllErrors.length + rAllErrors.length;
+  const totalCorrect = (raw.listening || 0) + (raw.reading || 0);
+  const targetBand = exam.targetBand || 7.0;
+  const gap = (targetBand - (sc.overall || 0)).toFixed(1);
+
+  const hasDetailedExplanations = answers && answers.explanations;
+
+  let md = '';
+  md += `# 📖 ${source} 模考智能解读报告\n\n`;
+  md += `> 生成时间：${new Date().toISOString()}\n`;
+  md += `> 模考日期：${(exam.timestamp || '').slice(0, 10)}\n`;
+  md += `> 模考类型：${exam.type === 'full' ? '全科模考' : exam.type === 'half' ? '半模考（听力+阅读）' : '单科模考'}\n`;
+  md += `> 目标分数：Band ${targetBand}\n\n`;
+  md += `---\n\n`;
+
+  // ===== 一、整体概览 =====
+  md += `## 一、整体概览\n\n`;
+  md += `| 科目 | 正确 | Band | 错题数 | 正确率 |\n`;
+  md += `|------|------|------|--------|--------|\n`;
+  md += `| 听力 | ${raw.listening != null ? raw.listening : '--'}/40 | ${sc.listening != null ? sc.listening.toFixed(1) : '--'} | ${lAllErrors.length} | ${raw.listening != null ? (raw.listening/40*100).toFixed(0)+'%' : '--'} |\n`;
+  md += `| 阅读 | ${raw.reading != null ? raw.reading : '--'}/40 | ${sc.reading != null ? sc.reading.toFixed(1) : '--'} | ${rAllErrors.length} | ${raw.reading != null ? (raw.reading/40*100).toFixed(0)+'%' : '--'} |\n`;
+  if (sc.writing != null || sc.speaking != null) {
+    md += `| 写作 | — | ${sc.writing != null ? sc.writing.toFixed(1) : '--'} | — | — |\n`;
+    md += `| 口语 | — | ${sc.speaking != null ? sc.speaking.toFixed(1) : '--'} | — | — |\n`;
+  }
+  md += `| **综合** | **${totalCorrect}/80** | **~${sc.overall != null ? sc.overall.toFixed(1) : '--'}** | **${totalErrors}** | **${(totalCorrect/80*100).toFixed(0)}%** |\n\n`;
+  md += `**🎯 距目标 Band ${targetBand}：差距约 ${gap} 分**`;
+  if (exam.type === 'half' || exam.type === 'single') {
+    md += `（注意：Overall 基于已录入的 ${exam.type === 'half' ? '听力+阅读两科' : '单科'} 计算，非四科完整平均）`;
+  }
+  md += `\n\n`;
+  md += `---\n\n`;
+
+  // ===== 二、听力逐题详解 =====
+  if (answers && answers.listening) {
+    const lAns = answers.listening;
+    md += `## 二、听力逐题详解 🎧\n\n`;
+    md += `### 真题信息\n\n`;
+    md += `| Section | 主题 | 题型 | 正确 | 错题 |\n`;
+    md += `|---------|------|------|------|------|\n`;
+    const lSecErrors = {
+      section1: lErrors.section1 || [],
+      section2: lErrors.section2 || [],
+      section3: lErrors.section3 || [],
+      section4: lErrors.section4 || []
+    };
+    ['section1','section2','section3','section4'].forEach((sk, i) => {
+      const sec = lAns[sk];
+      const errs = lSecErrors[sk];
+      md += `| Part ${i+1} | ${sec ? sec.topic : '未知'} | ${sec ? sec.types || '填空' : '未知'} | ${10 - errs.length}/10 | ${errs.length > 0 ? '❌ '+errs.length+'题' : '✅ 全对'} |\n`;
+    });
+    md += `\n---\n\n`;
+
+    // 逐 section 逐题详解
+    ['section1','section2','section3','section4'].forEach((sk, i) => {
+      const secErrors = lSecErrors[sk];
+      const secAnswers = lAns[sk];
+      const partNum = i + 1;
+
+      md += `### Part ${partNum} — ${secAnswers ? secAnswers.topic : '未知'}\n\n`;
+      md += `**正确率**：${10 - secErrors.length}/10（${((10-secErrors.length)/10*100).toFixed(0)}%）\n\n`;
+
+      if (secErrors.length === 0) {
+        md += `✅ **本部分全对！**`;
+        if (partNum === 1) md += `基础生活场景类填空题表现良好，继续保持。`;
+        else if (partNum === 2) md += `地图题和单选题掌握扎实。`;
+        else if (partNum === 3) md += `多人讨论场景信息筛选能力出色。`;
+        else if (partNum === 4) md += `学术讲座听力理解能力扎实。`;
+        md += `\n\n`;
+        if (secAnswers && secAnswers.answers) {
+          md += `<details>\n<summary>📋 答案对照（点击展开）</summary>\n\n`;
+          secAnswers.answers.forEach((ans, idx) => {
+            const globalQ = partNum === 1 ? idx+1 : partNum === 2 ? idx+11 : partNum === 3 ? idx+21 : idx+31;
+            md += `- **Q${globalQ}**：${ans}\n`;
+          });
+          md += `\n</details>\n\n`;
+        }
+      } else {
+        md += `**错题号**：${secErrors.sort((a,b)=>a-b).map(q => '**Q'+q+'**').join('、')}\n\n`;
+        if (secAnswers && secAnswers.types) {
+          md += `**题目类型**：${secAnswers.types}\n\n`;
+        }
+
+        // 逐题详细解析
+        secErrors.sort((a,b)=>a-b).forEach((qNum, errIdx) => {
+          const correctAns = formatAnswerForDisplay(secAnswers, qNum, sk);
+          const expl = getQuestionExplanation(source, answers, qNum, true);
+
+          md += `#### 🔴 错题 ${errIdx+1}：Q${qNum}\n\n`;
+          md += `| 项目 | 内容 |\n`;
+          md += `|------|------|\n`;
+          md += `| **正确答案** | **${correctAns}** |\n`;
+
+          if (expl) {
+            // 有详细解析数据
+            md += `| **错因分类** | ${expl.reason} — ${getListeningReasons()[expl.reason] || expl.reason} |\n`;
+            md += `| **原文线索** | ${expl.sourceQuote || '（请参考真题原文）'} |\n`;
+            md += `\n**📝 详细分析**：\n\n${expl.explanation}\n\n`;
+            md += `**💡 解题思路**：\n\n${expl.strategy}\n\n`;
+            if (expl.vocab) {
+              md += `**📚 关键词汇**：${expl.vocab}\n\n`;
+            }
+          } else {
+            // 无解析数据时的通用提示
+            md += `| **错因** | 请分析做题过程，判断是拼写/漏听/干扰项/同义替换等问题 |\n`;
+            md += `\n**📝 分析**：\n\n本题在 ${source} Listening Part ${partNum} 中。建议回顾该题对应的录音位置，分析错误原因。正确答案为 **${correctAns}**，请对照检查你的答案偏差在哪里。\n\n`;
+            md += `**💡 建议**：如需详细解析，请将本题加入已知题库（KNOWN_ANSWERS.explanations）。\n\n`;
+          }
+          md += `---\n\n`;
+        });
+
+        // Part 小结
+        md += `**📊 Part ${partNum} 小结**：\n\n`;
+        if (hasDetailedExplanations && secErrors.length > 0) {
+          const reasons = secErrors.map(q => {
+            const e = getQuestionExplanation(source, answers, q, true);
+            return e ? e.reason : '未知';
+          });
+          const reasonCounts = {};
+          reasons.forEach(r => { reasonCounts[r] = (reasonCounts[r] || 0) + 1; });
+          md += `错因分布：${Object.entries(reasonCounts).map(([k,v]) => `**${k}**(${getListeningReasons()[k]?.split('——')[0] || k}) ×${v}`).join('、')}\n\n`;
+        }
+        md += `本部分共错 ${secErrors.length} 题，需要重点练习。\n\n`;
+      }
+      md += `---\n\n`;
+    });
+
+    // 听力错因汇总
+    md += `### 📊 听力错因汇总\n\n`;
+    if (hasDetailedExplanations) {
+      const allLReasons = {};
+      lAllErrors.forEach(q => {
+        const e = getQuestionExplanation(source, answers, q, true);
+        const r = e ? e.reason : '未知';
+        allLReasons[r] = (allLReasons[r] || 0) + 1;
+      });
+      md += `| 错因 | 次数 | 说明 |\n`;
+      md += `|------|------|------|\n`;
+      Object.entries(allLReasons).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+        md += `| **${k}** | ${v} | ${getListeningReasons()[k] || ''} |\n`;
+      });
+      md += `\n`;
+    }
+    md += `| Section | 错题数 | 核心问题 |\n`;
+    md += `|---------|--------|----------|\n`;
+    ['section1','section2','section3','section4'].forEach((sk, i) => {
+      const cnt = lSecErrors[sk].length;
+      // Dynamic issue summary based on dominant error reason
+      let issues = '—';
+      if (cnt > 0 && hasDetailedExplanations) {
+        const secReasons = {};
+        lSecErrors[sk].forEach(q => {
+          const e = getQuestionExplanation(source, answers, q, true);
+          const r = e ? e.reason : '未知';
+          secReasons[r] = (secReasons[r] || 0) + 1;
+        });
+        const topReasons = Object.entries(secReasons).sort((a,b)=>b[1]-a[1]).slice(0,2);
+        issues = topReasons.map(([k,v]) => `${getListeningReasons()[k]?.split('——')[0] || k}(${v}次)`).join('、');
+      } else if (cnt > 0) {
+        // Fallback when no detailed explanations available
+        issues = i === 3 ? '学术独白听力' : i === 2 ? '多人对话信息筛选' : i === 1 ? '地图/单选' : '基础填空';
+      }
+      md += `| S${i+1} | ${cnt} | ${issues} |\n`;
+    });
+    md += `\n---\n\n`;
+  }
+
+  // ===== 三、阅读逐题详解 =====
+  if (answers && answers.reading) {
+    const rAns = answers.reading;
+    md += `## 三、阅读逐题详解 📖\n\n`;
+    md += `### 真题信息\n\n`;
+    md += `| Passage | 主题 | 题型分布 | 正确 | 错题 |\n`;
+    md += `|---------|------|----------|------|------|\n`;
+    const rPasErrors = {
+      passage1: rErrors.passage1 || [],
+      passage2: rErrors.passage2 || [],
+      passage3: rErrors.passage3 || []
+    };
+    ['passage1','passage2','passage3'].forEach((pk, i) => {
+      const pas = rAns[pk];
+      const errs = rPasErrors[pk];
+      md += `| P${i+1} | ${pas ? pas.topic : '未知'} | ${pas ? pas.types || '未知' : '未知'} | ${13 - errs.length}/13 | ${errs.length > 0 ? '❌ '+errs.length+'题' : '✅ 全对'} |\n`;
+    });
+    md += `\n---\n\n`;
+
+    // 逐 passage 逐题详解
+    ['passage1','passage2','passage3'].forEach((pk, i) => {
+      const pasErrors = rPasErrors[pk];
+      const pasAnswers = rAns[pk];
+      const passageNum = i + 1;
+
+      md += `### Passage ${passageNum} — ${pasAnswers ? pasAnswers.topic : '未知'}\n\n`;
+      md += `**正确率**：${13 - pasErrors.length}/13（${((13-pasErrors.length)/13*100).toFixed(0)}%）\n\n`;
+
+      if (pasErrors.length === 0) {
+        md += `✅ **本篇文章全对！**继续保持。\n\n`;
+      } else {
+        md += `**错题号**：${pasErrors.sort((a,b)=>a-b).map(q => '**Q'+q+'**').join('、')}\n\n`;
+        if (pasAnswers && pasAnswers.types) {
+          md += `**题目类型**：${pasAnswers.types}\n\n`;
+        }
+
+        // 逐题详细解析
+        pasErrors.sort((a,b)=>a-b).forEach((qNum, errIdx) => {
+          const correctAns = formatReadingAnswerDisplay(pasAnswers, qNum, passageNum);
+          const expl = getQuestionExplanation(source, answers, qNum, false);
+
+          md += `#### 🔴 错题 ${errIdx+1}：Q${qNum}\n\n`;
+          md += `| 项目 | 内容 |\n`;
+          md += `|------|------|\n`;
+          md += `| **正确答案** | **${correctAns}** |\n`;
+
+          if (expl) {
+            md += `| **错因分类** | ${expl.reason} — ${getReadingReasons()[expl.reason] || expl.reason} |\n`;
+            md += `| **原文线索** | ${expl.sourceQuote || '（请参考真题原文）'} |\n`;
+            md += `\n**📝 详细分析**：\n\n${expl.explanation}\n\n`;
+            md += `**💡 解题思路**：\n\n${expl.strategy}\n\n`;
+            if (expl.vocab) {
+              md += `**📚 关键词汇**：${expl.vocab}\n\n`;
+            }
+          } else {
+            md += `| **错因** | 请分析做题过程，判断是定位/同义替换/逻辑/判断等问题 |\n`;
+            md += `\n**📝 分析**：\n\n本题在 ${source} Reading Passage ${passageNum} 中。建议回顾该题对应的原文位置，分析错误原因。正确答案为 **${correctAns}**，请对照检查你的答案偏差在哪里。\n\n`;
+            md += `**💡 建议**：如需详细解析，请将本题加入已知题库（KNOWN_ANSWERS.explanations）。\n\n`;
+          }
+          md += `---\n\n`;
+        });
+
+        // Passage 小结
+        md += `**📊 Passage ${passageNum} 小结**：\n\n`;
+        if (hasDetailedExplanations) {
+          const reasons = pasErrors.map(q => {
+            const e = getQuestionExplanation(source, answers, q, false);
+            return e ? e.reason : '未知';
+          });
+          const reasonCounts = {};
+          reasons.forEach(r => { reasonCounts[r] = (reasonCounts[r] || 0) + 1; });
+          md += `错因分布：${Object.entries(reasonCounts).map(([k,v]) => `**${k}**(${getReadingReasons()[k]?.split('——')[0] || k}) ×${v}`).join('、')}\n\n`;
+        }
+        md += `本篇文章共错 ${pasErrors.length} 题，需要重点练习。\n\n`;
+      }
+      md += `---\n\n`;
+    });
+
+    // 阅读错因汇总
+    md += `### 📊 阅读错因汇总\n\n`;
+    if (hasDetailedExplanations) {
+      const allRReasons = {};
+      rAllErrors.forEach(q => {
+        const e = getQuestionExplanation(source, answers, q, false);
+        const r = e ? e.reason : '未知';
+        allRReasons[r] = (allRReasons[r] || 0) + 1;
+      });
+      md += `| 错因 | 次数 | 说明 |\n`;
+      md += `|------|------|------|\n`;
+      Object.entries(allRReasons).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+        md += `| **${k}** | ${v} | ${getReadingReasons()[k] || ''} |\n`;
+      });
+      md += `\n`;
+    }
+    md += `| Passage | 错题数 | 核心问题 |\n`;
+    md += `|---------|--------|----------|\n`;
+    ['passage1','passage2','passage3'].forEach((pk, i) => {
+      const cnt = rPasErrors[pk].length;
+      let issues = '—';
+      if (cnt > 0 && hasDetailedExplanations) {
+        const pasReasons = {};
+        rPasErrors[pk].forEach(q => {
+          const e = getQuestionExplanation(source, answers, q, false);
+          const r = e ? e.reason : '未知';
+          pasReasons[r] = (pasReasons[r] || 0) + 1;
+        });
+        const topReasons = Object.entries(pasReasons).sort((a,b)=>b[1]-a[1]).slice(0,2);
+        issues = topReasons.map(([k,v]) => `${getReadingReasons()[k]?.split('——')[0] || k}(${v}次)`).join('、');
+      } else if (cnt > 0) {
+        issues = i === 2 ? '学术观点理解' : i === 1 ? '人名观点区分' : '扫读定位速度';
+      }
+      md += `| P${i+1} | ${cnt} | ${issues} |\n`;
+    });
+    md += `\n---\n\n`;
+  }
+
+  // ===== 三、写作分析 =====
+  const essayData = exam.essayData;
+  if (essayData && (essayData.task1 || essayData.task2)) {
+    md += `## 三、写作分析 ✏️\n\n`;
+    md += `> ⚠️ **评分说明**：以下写作为基于文本统计特征（字数、段落、词汇多样性、连接词频率、句式复杂度）的**粗略估算**，非人工批改或 AI 语言模型评分。估算容差约 ±1.0 Band。精确评估建议使用 ielts-writing skill 或专业批改服务。\n\n`;
+    const wScore = sc.writing;
+    if (wScore != null) {
+      md += `**写作总分**：Band ${wScore.toFixed(1)}${wScore >= targetBand ? ' ✅ 达标' : ' ⚠️ 未达标，差距 ' + (targetBand - wScore).toFixed(1) + ' 分'}\n\n`;
+    }
+
+    if (essayData.task1 && essayData.task1.scores) {
+      const t1 = essayData.task1.scores;
+      md += `### Task 1 评分详情\n\n`;
+      md += `| 维度 | 分数 | 说明 |\n`;
+      md += `|------|------|------|\n`;
+      md += `| TA (任务完成度) | ${t1.ta != null ? t1.ta.toFixed(1) : '--'} | 数据描述是否完整、准确 |\n`;
+      md += `| CC (连贯衔接) | ${t1.cc != null ? t1.cc.toFixed(1) : '--'} | 段落逻辑与衔接词使用 |\n`;
+      md += `| LR (词汇资源) | ${t1.lr != null ? t1.lr.toFixed(1) : '--'} | 词汇多样性 ${t1.lexicalDiversity || '--'} |\n`;
+      md += `| GRA (语法准确性) | ${t1.gra != null ? t1.gra.toFixed(1) : '--'} | 语法复杂度与准确性 |\n`;
+      md += `| **总分** | **${t1.overall != null ? t1.overall.toFixed(1) : '--'}** | 字数：${t1.wordCount || '--'} |\n\n`;
+      if (t1.analysis) {
+        md += `**写作分析**：${t1.analysis.paragraphs || 0} 段，${t1.analysis.sentences || 0} 句，平均句长 ${t1.analysis.avgSentenceLen || '--'} 词，独特词汇 ${t1.analysis.uniqueWords || 0} 个\n\n`;
+      }
+    } else if (essayData.task1) {
+      md += `### Task 1\n\n`;
+      md += `> 作文已上传但未进行统计分析。建议点击「统计分析」按钮进行文本特征评估。\n`;
+      md += `> ⚠️ 注意：统计分析为基于字数、段落、词汇多样性等表面特征的粗略估算（±1.0 Band 容差），非精确 AI 评分。\n\n`;
+    }
+
+    if (essayData.task2 && essayData.task2.scores) {
+      const t2 = essayData.task2.scores;
+      md += `### Task 2 评分详情\n\n`;
+      md += `| 维度 | 分数 | 说明 |\n`;
+      md += `|------|------|------|\n`;
+      md += `| TR (任务回应度) | ${t2.tr != null ? t2.tr.toFixed(1) : '--'} | 论点展开与论证充分性 |\n`;
+      md += `| CC (连贯衔接) | ${t2.cc != null ? t2.cc.toFixed(1) : '--'} | 段落逻辑与衔接词使用 |\n`;
+      md += `| LR (词汇资源) | ${t2.lr != null ? t2.lr.toFixed(1) : '--'} | 词汇多样性 ${t2.lexicalDiversity || '--'} |\n`;
+      md += `| GRA (语法准确性) | ${t2.gra != null ? t2.gra.toFixed(1) : '--'} | 语法复杂度与准确性 |\n`;
+      md += `| **总分** | **${t2.overall != null ? t2.overall.toFixed(1) : '--'}** | 字数：${t2.wordCount || '--'} |\n\n`;
+      if (t2.analysis) {
+        md += `**写作分析**：${t2.analysis.paragraphs || 0} 段，${t2.analysis.sentences || 0} 句，平均句长 ${t2.analysis.avgSentenceLen || '--'} 词，独特词汇 ${t2.analysis.uniqueWords || 0} 个\n\n`;
+      }
+    } else if (essayData.task2) {
+      md += `### Task 2\n\n`;
+      md += `> 作文已上传但未进行统计分析。建议点击「统计分析」按钮进行文本特征评估。\n`;
+      md += `> ⚠️ 注意：统计分析为基于字数、段落、词汇多样性等表面特征的粗略估算（±1.0 Band 容差），非精确 AI 评分。\n\n`;
+    }
+
+    // Writing-specific training suggestions
+    if (wScore != null && wScore < targetBand) {
+      const wGap = targetBand - wScore;
+      if (wGap >= 1.0) {
+        md += `**⚠️ 写作提分建议**（差距 ${wGap.toFixed(1)} 分）：\n\n`;
+        if (essayData.task2 && essayData.task2.scores && essayData.task2.scores.tr < 6.0) {
+          md += `- 🔴 **TR 任务回应**：审题时列出关键词，确保每段都紧扣题目。练习写完整提纲再动笔。\n`;
+        }
+        if (essayData.task2 && essayData.task2.scores && essayData.task2.scores.cc < 6.0) {
+          md += `- 🔴 **CC 连贯衔接**：使用 Firstly/Secondly/Moreover/In contrast/As a result 等连接词串联段落。\n`;
+        }
+        if (essayData.task2 && essayData.task2.scores && essayData.task2.scores.lr < 6.0) {
+          md += `- 🟡 **LR 词汇资源**：扩充话题词汇库，每天背 10 个学术词汇并在写作中使用。避免重复用词。\n`;
+        }
+        if (essayData.task2 && essayData.task2.scores && essayData.task2.scores.gra < 6.0) {
+          md += `- 🟡 **GRA 语法准确性**：练习复合句（定语从句、状语从句）。写完后检查主谓一致和时态。\n`;
+        }
+        md += `- 每周至少写 2 篇 Task 1 + 2 篇 Task 2，限时 20/40 分钟\n\n`;
+      }
+    }
+
+    md += `---\n\n`;
+  }
+
+  // ===== 四、能力诊断 =====
+  md += `## 四、能力诊断 🏥\n\n`;
+  if (raw.listening != null) {
+    md += `### 听力能力诊断\n\n`;
+    const s4Cnt = (lErrors.section4 || []).length;
+    const s3Cnt = (lErrors.section3 || []).length;
+    const s2Cnt = (lErrors.section2 || []).length;
+    const s1Cnt = (lErrors.section1 || []).length;
+    const starRating = (cnt) => cnt === 0 ? '⭐⭐⭐⭐⭐' : cnt <= 1 ? '⭐⭐⭐⭐' : cnt <= 3 ? '⭐⭐⭐' : '⭐⭐';
+    const gapLabel = (cnt) => cnt === 0 ? '达标' : cnt <= 1 ? '需小幅提升' : '需大幅提升';
+    md += `| 能力维度 | 当前水平 | 目标水平 | 差距 | 说明 |\n`;
+    md += `|----------|----------|----------|------|------|\n`;
+    md += `| S1 生活对话填空 | ${starRating(s1Cnt)} | ⭐⭐⭐⭐⭐ | ${gapLabel(s1Cnt)} | 错${s1Cnt}题 |\n`;
+    md += `| S2 地图+单选 | ${starRating(s2Cnt)} | ⭐⭐⭐⭐ | ${gapLabel(s2Cnt)} | 错${s2Cnt}题 |\n`;
+    md += `| S3 多人讨论多选+匹配 | ${starRating(s3Cnt)} | ⭐⭐⭐⭐ | ${gapLabel(s3Cnt)} | 错${s3Cnt}题 |\n`;
+    md += `| S4 学术讲座填空 | ${starRating(s4Cnt)} | ⭐⭐⭐⭐ | ${gapLabel(s4Cnt)} | 错${s4Cnt}题 |\n`;
+    md += `| 拼写速度与准确性 | ${s4Cnt <= 2 ? '⭐⭐⭐' : '⭐⭐'} | ⭐⭐⭐⭐ | 需提升 | — |\n\n`;
+  }
+  if (raw.reading != null) {
+    md += `### 阅读能力诊断\n\n`;
+    const p3Cnt = (rErrors.passage3 || []).length;
+    const p2Cnt = (rErrors.passage2 || []).length;
+    const p1Cnt = (rErrors.passage1 || []).length;
+    const rStarRating = (cnt) => cnt === 0 ? '⭐⭐⭐⭐⭐' : cnt <= 2 ? '⭐⭐⭐' : '⭐⭐';
+    const rGapLabel = (cnt) => cnt === 0 ? '达标' : cnt <= 2 ? '需提升' : '需大幅提升';
+    md += `| 能力维度 | 当前水平 | 目标水平 | 差距 | 说明 |\n`;
+    md += `|----------|----------|----------|------|------|\n`;
+    md += `| 扫读/定位速度 | ${rStarRating(p1Cnt)} | ⭐⭐⭐⭐ | ${rGapLabel(p1Cnt)} | P1 错${p1Cnt}题 |\n`;
+    md += `| 段落信息匹配 | ${rStarRating(p1Cnt)} | ⭐⭐⭐⭐ | ${rGapLabel(p1Cnt)} | — |\n`;
+    md += `| 人名观点区分 | ${rStarRating(p2Cnt)} | ⭐⭐⭐ | ${rGapLabel(p2Cnt)} | P2 错${p2Cnt}题 |\n`;
+    md += `| Y/N/NG 判断 | ${rStarRating(p3Cnt)} | ⭐⭐⭐⭐ | ${rGapLabel(p3Cnt)} | — |\n`;
+    md += `| 学术长文理解 | ${rStarRating(p3Cnt)} | ⭐⭐⭐⭐ | ${rGapLabel(p3Cnt)} | P3 错${p3Cnt}题 |\n\n`;
+  }
+  md += `---\n\n`;
+
+  // ===== 五、针对性提分建议 =====
+  md += `## 五、针对性提分建议 📋\n\n`;
+  md += `| 序号 | 薄弱环节 | 具体训练方案 | 频率 | 优先级 |\n`;
+  md += `|------|----------|-------------|------|--------|\n`;
+  let suggestionIdx = 0;
+  if (raw.listening != null) {
+    const s4Cnt = (lErrors.section4 || []).length;
+    const s3Cnt = (lErrors.section3 || []).length;
+    const s2Cnt = (lErrors.section2 || []).length;
+    if (s4Cnt > 3) {
+      suggestionIdx++;
+      md += `| ${suggestionIdx} | 听力 S4 学术填空 | 精听 C10-C16 所有 Part 4，逐句听写。重点练多音节长词拼写：irrigation, preservation, conservation, environment 等。每次听写后对照原文订正，错词抄写 5 遍。 | 每天 1 篇 | 🔴 最高 |\n`;
+    }
+    if (s3Cnt > 2) {
+      suggestionIdx++;
+      md += `| ${suggestionIdx} | 听力 S3 多选+匹配 | 先读题画出关键词，听时同时追踪两个信息点。匹配题注意每个选项只被选一次，利用排除法缩小范围。重点练习 C10-C16 的 Part 3 多选和匹配题。 | 每天 1 套 | 🔴 最高 |\n`;
+    }
+    if (s2Cnt > 1) {
+      suggestionIdx++;
+      md += `| ${suggestionIdx} | 听力 S2 地图题 | 开始前在图上标注 N/S/E/W 方位词和入口。听时用手指在图上跟随路径。重点练 C11-C16 地图题（约 12 套）。 | 每 2 天 1 套 | 🟡 中 |\n`;
+    }
+  }
+  if (raw.reading != null) {
+    const p3Cnt = (rErrors.passage3 || []).length;
+    const p1Cnt = (rErrors.passage1 || []).length;
+    if (p3Cnt > 4) {
+      suggestionIdx++;
+      md += `| ${suggestionIdx} | 阅读 P3 学术长文 | 限时 20 分钟完成一篇 Passage 3。先读题→划关键词→回原文定位→精读定位句。重点练学术类文章（心理、生物、社会）。 | 每天 1 篇 | 🔴 最高 |\n`;
+    }
+    if (p3Cnt > 0) {
+      suggestionIdx++;
+      md += `| ${suggestionIdx} | 阅读 Y/N/NG 判断 | 集中做 30-40 道判断题。总结 NG 三法则：①没比较=NG ②原文没提到=NG ③部分提到但整体不完整=NG。区分 NO（矛盾）vs NG（未提及）。 | 集中练 3 天 | 🟡 中 |\n`;
+    }
+    if (p1Cnt > 2) {
+      suggestionIdx++;
+      md += `| ${suggestionIdx} | 阅读段落信息匹配 | 训练方法：①读题目关键词 ②快速扫读每段首尾句 ③锁定候选段落 ④精读验证。时间控制在 10 分钟内。 | 每 2 天 1 套 | 🟡 中 |\n`;
+    }
+  }
+  md += `\n---\n\n`;
+
+  // ===== 六、成绩追踪 =====
+  md += `## 六、成绩追踪 📈\n\n`;
+  md += `| 模考 | 听力 | 阅读 | 总分 |\n`;
+  md += `|------|------|------|------|\n`;
+  md += `| **${source} (本次)** | **${sc.listening != null ? sc.listening.toFixed(1) : '--'}** | **${sc.reading != null ? sc.reading.toFixed(1) : '--'}** | **~${sc.overall != null ? sc.overall.toFixed(1) : '--'}** |\n`;
+  md += `| 目标 | ${targetBand.toFixed(1)} | ${targetBand.toFixed(1)} | ${targetBand.toFixed(1)} |\n`;
+  md += `| 差距 | ${sc.listening != null ? (targetBand - sc.listening).toFixed(1) : '--'} | ${sc.reading != null ? (targetBand - sc.reading).toFixed(1) : '--'} | ${gap} |\n\n`;
+
+  // 提分路径
+  if (raw.listening != null && raw.reading != null) {
+    const s4Cnt = (lErrors.section4 || []).length;
+    const p3Cnt = (rErrors.passage3 || []).length;
+    md += `**提分路径分析**：\n\n`;
+    if (s4Cnt > 3) md += `- 听力 S4 从错 ${s4Cnt} 题 → 目标错 2 题以内 → Band ${sc.listening != null ? sc.listening.toFixed(1) : '--'} → 7.0+\n`;
+    if (p3Cnt > 4) md += `- 阅读 P3 从错 ${p3Cnt} 题 → 目标错 4 题以内 → Band ${sc.reading != null ? sc.reading.toFixed(1) : '--'} → 6.5+\n`;
+    md += `- 两项合计可提升总分约 0.5-1.0 分\n`;
+  }
+  md += `\n---\n\n`;
+  md += `*报告由 IELTS Analysis 自动生成 · 生成时间：${new Date().toISOString().slice(0, 10)}*\n`;
+  if (hasDetailedExplanations) {
+    md += `*\n> 📌 数据来源说明：听力/阅读真题答案和解析来自已收录的 ${source} 已知题库（基于互联网公开资源检索整理）。写作评分为基于文本统计特征的粗略估算（±1.0 Band 容差），非人工批改或 AI 语言模型评分。如需精确写作评估，建议使用 ielts-writing skill 或寻求专业批改服务。*\n`;
+  } else {
+    md += `*\n> ⚠️ 数据来源说明：当前试卷（${source}）的真题答案尚未收录到已知题库中。报告中仅展示了通用分析模板，缺少逐题详细解析。建议通过 ielts-analysis skill 联网搜索补充该试卷的真题答案数据。写作评分为基于文本统计特征的粗略估算，非精确评分。*\n`;
+  }
+
+  return md;
+}
+
+function findWeakestListeningSection(lErrors) {
+  const sections = {
+    'S1': (lErrors.section1 || []).length,
+    'S2': (lErrors.section2 || []).length,
+    'S3': (lErrors.section3 || []).length,
+    'S4': (lErrors.section4 || []).length
+  };
+  const max = Math.max(...Object.values(sections));
+  return Object.keys(sections).filter(k => sections[k] === max).join('、') || '—';
+}
+
+function findWeakestReadingPassage(rErrors) {
+  const passages = {
+    'P1': (rErrors.passage1 || []).length,
+    'P2': (rErrors.passage2 || []).length,
+    'P3': (rErrors.passage3 || []).length
+  };
+  const max = Math.max(...Object.values(passages));
+  return Object.keys(passages).filter(k => passages[k] === max).join('、') || '—';
+}
+
+// Trigger analysis — now prompts user to use AI assistant dialog (async backfill mode)
+// One unified command handles both L/R error analysis AND writing scoring
+async function triggerAnalysis(examId) {
+  const statusEl = document.getElementById('analysisStatus');
+  const msg = `💡 智能解读由 AI 助手在对话框中完成。<br><br>
+    请在 AI 助手对话框发送「<b>智能解读${examId ? ' ' + examId : ''}</b>」一键获取：<br>
+    &nbsp;&nbsp;📖 听力+阅读逐题错因分析报告<br>
+    &nbsp;&nbsp;📝 写作四维评分 + 逐段改写<br>
+    <small style="color:var(--text-dim)">报告生成后会自动显示在下方「模考解读报告」列表中。</small>`;
+  if (statusEl) statusEl.innerHTML = `<div style="color:var(--accent);padding:16px 0;line-height:1.8">${msg}</div>`;
+  else {
+    // Called from modal — show in the modal result area
+    const resultEl = document.getElementById('modalAnalysisResult_' + examId);
+    if (resultEl) resultEl.innerHTML = `<div style="color:var(--accent);padding:12px 0;line-height:1.8">${msg}</div>`;
+  }
+}
+
+// Trigger analysis from the exam error detail modal (auto-associates current examId)
+function triggerAnalysisFromModal(examId) {
+  triggerAnalysis(examId);
+}
+
+// Load and display analysis reports
+async function loadAnalysisReports() {
+  const container = document.getElementById('analysisReports');
+  try {
+    const resp = await fetch('/api/analysis/list', { method: 'POST' });
+    if (!resp.ok) {
+      container.innerHTML = '<div class="analysis-empty">无法加载报告列表（请确认 server.py 已更新）</div>';
+      return;
+    }
+    const data = await resp.json();
+    const reports = data.reports || [];
+
+    if (reports.length === 0) {
+      container.innerHTML = '<div class="analysis-empty">暂无解读报告。录入模考数据后，在 AI 助手对话框发送「<b>智能解读 exam-id</b>」一键获取错题分析 + 写作评分。</div>';
+      return;
+    }
+
+    let html = '';
+    reports.forEach(r => {
+      const d = new Date(r.modified * 1000);
+      const dateStr = d.toLocaleString('zh-CN');
+      html += `<div class="analysis-card">
+        <div class="report-info">
+          <span class="report-icon">📄</span>
+          <div class="report-meta">
+            <span class="report-title">${escapeHtml(r.title)}</span>
+            <span class="report-date">${dateStr} · ${(r.size / 1024).toFixed(1)} KB</span>
+          </div>
+        </div>
+        <div class="report-actions">
+          <button class="btn-sm primary" onclick="viewAnalysisReport('${escapeHtml(r.filename)}')">查看</button>
+          <button class="btn-sm danger" onclick="deleteAnalysisReport('${escapeHtml(r.filename)}')">删除</button>
+        </div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = '<div class="analysis-empty">无法连接服务器（请确认 server.py 已启动并更新）</div>';
+  }
+}
+
+// View a report in modal
+async function viewAnalysisReport(filename) {
+  try {
+    const resp = await fetch('analysis-reports/' + filename);
+    if (!resp.ok) throw new Error('File not found');
+    const md = await resp.text();
+
+    // Simple markdown to HTML conversion
+    let html = md
+      // Headers
+      .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      // Bold and italic
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // Code
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Blockquote
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr>')
+      // Tables - basic support
+      .replace(/^\|(.+)\|$/gm, (line) => {
+        const cells = line.split('|').filter(c => c.trim()).map(c => c.trim());
+        if (cells.every(c => /^[-:]+$/.test(c))) return '</thead><tbody>'; // separator row
+        const tag = line.includes('</thead>') ? 'td' : 'th';
+        return '<tr>' + cells.map(c => `<${tag}>${c}</${tag}>`).join('') + '</tr>';
+      });
+
+    // Wrap tables
+    html = html.replace(/(<tr><th>.+<\/tr>)/g, '<table><thead>$1</thead><tbody>');
+    html = html.replace(/<\/tbody>(?![\s\S]*<table>)/, '</tbody></table>');
+    // Fix unclosed tables
+    if ((html.match(/<table>/g) || []).length > (html.match(/<\/table>/g) || []).length) {
+      html += '</tbody></table>';
+    }
+
+    // Line breaks
+    html = html.replace(/\n\n/g, '<br><br>');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'analysis-viewer-overlay';
+    overlay.id = 'analysisViewerOverlay';
+    overlay.innerHTML = `<div class="analysis-viewer-panel">
+      <button class="close-btn" onclick="closeAnalysisViewer()">✕</button>
+      ${html}
+    </div>`;
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeAnalysisViewer();
+    });
+    document.body.appendChild(overlay);
+  } catch (e) {
+    alert('无法加载报告：' + e.message);
+  }
+}
+
+function closeAnalysisViewer() {
+  const overlay = document.getElementById('analysisViewerOverlay');
+  if (overlay) overlay.remove();
+}
+
+async function deleteAnalysisReport(filename) {
+  if (!confirm(`确定删除报告「${filename}」？此操作不可撤销。`)) return;
+  try {
+    const resp = await fetch('/api/analysis/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: filename })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      await loadAnalysisReports();
+    } else {
+      alert('删除失败：' + (data.error || '未知错误'));
+    }
+  } catch (e) {
+    alert('删除失败：' + e.message);
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============= INIT =============
+async function init() {
+  await initData();
+  await syncProgressFromExams(); // Ensure progress + module indexes reflect latest exam data
+  renderOverview();
+  await renderWriting();
+  await renderReading();
+  await renderListening();
+  await renderSpeaking();
+  await renderVocab();
+  await renderExam();
+  initExamCambridge();
+  await loadAnalysisReports();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

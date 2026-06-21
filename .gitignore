@@ -1,0 +1,62 @@
+# Personal user data (not included in repo)
+data/known-answers.json
+data/profile.json
+data/progress.json
+data/history.json
+data/exam/index.json
+data/exam/exam-*.json
+data/writing/index.json
+data/writing/essay-*.json
+data/reading/index.json
+data/reading/passage-*.json
+data/reading/synonyms.json
+data/listening/index.json
+data/listening/test-*.json
+data/listening/errors.json
+data/speaking/index.json
+data/speaking/practice-*.json
+data/speaking/stories.json
+data/vocab/index.json
+data/vocab/wordbank.json
+data/vocab/review-log.json
+data/vocab/academic-word-list.json
+data/vocab/review-intervals.json
+data/vocab/synonym-types.json
+data/dashboard/stats-cache.json
+
+# Personal analysis reports
+analysis-reports/*.md
+!analysis-reports/README.md
+
+# User materials
+materials/cambridge/*
+materials/writing/*
+materials/reading/*
+materials/listening/*
+materials/speaking/*
+materials/vocab/*
+materials/templates/*
+!materials/README.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

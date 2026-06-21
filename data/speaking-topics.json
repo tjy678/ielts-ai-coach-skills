@@ -1,0 +1,10 @@
+{
+  "categories": [
+    { "cat": "People", "total": 12 },
+    { "cat": "Places", "total": 10 },
+    { "cat": "Objects", "total": 8 },
+    { "cat": "Experiences", "total": 15 },
+    { "cat": "Hobbies/Habits", "total": 6 },
+    { "cat": "Abstract", "total": 5 }
+  ]
+}

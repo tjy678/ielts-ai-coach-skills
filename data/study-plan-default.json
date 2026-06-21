@@ -1,0 +1,12 @@
+{
+  "days": ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+  "plan": {
+    "Mon": "听力精听\nSection 3",
+    "Tue": "写作 Task 2\n审题+练习",
+    "Wed": "阅读 1 篇\nT/F/NG 专项",
+    "Thu": "口语 Part 2\n素材准备",
+    "Fri": "写作 Task 1\n图表描述",
+    "Sat": "模考\n听力+阅读",
+    "Sun": "复习错题\n词汇积累"
+  }
+}
