@@ -16,7 +16,7 @@
 
 ## 概述
 
-IELTS 备考 AI 教练skills是一个基于 [CodeBuddy](https://www.codebuddy.ai) Skill 架构的全方位雅思备考工具。它整合了 **10 个专项训练模块** 和一个 **本地 Web Dashboard**，帮助你可视化追踪备考进度。
+IELTS 备考 AI 教练skills是一个基于 [CodeBuddy](https://www.codebuddy.ai) Skill 架构的全方位雅思备考工具。它整合了 **7 个专项训练模块** 和一个 **本地 Web Dashboard**，帮助你可视化追踪备考进度。
 
 所有数据 **100% 本地存储** —— 无需上传云端，无需注册账号。
 
