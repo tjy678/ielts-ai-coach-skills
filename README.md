@@ -1,4 +1,4 @@
-# IELTS 备考 AI 教练系统
+# IELTS 备考 AI 教练skill
 
 <p align="center">
   <strong>📊 基于 AI 的雅思备考系统，配备本地可视化 Dashboard</strong><br>
